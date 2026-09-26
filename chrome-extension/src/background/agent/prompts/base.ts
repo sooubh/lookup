@@ -31,7 +31,7 @@ abstract class BasePrompt {
    * Builds the user message containing the sanitized browser state.
    * Intercepts raw browser context and passes it through the LOOKUP Local Privacy Gateway
    * before remote model transmission.
-   * 
+   *
    * @param context - The agent context
    * @returns HumanMessage from LangChain with sanitized context
    */
@@ -56,10 +56,7 @@ abstract class BasePrompt {
     }
 
     // Convert elementTree and selectorMap into structured RawDomElement[] for DOM detection
-    const rawDomElements = extractRawDomElementsFromBrowserState(
-      browserState.elementTree,
-      browserState.selectorMap,
-    );
+    const rawDomElements = extractRawDomElementsFromBrowserState(browserState.elementTree, browserState.selectorMap);
 
     // 3. Construct RawBrowserContext for local evaluation
     const rawContext: RawBrowserContext = {
@@ -69,7 +66,7 @@ abstract class BasePrompt {
       pageTitle: browserState.title,
       dom: rawDomElements,
       screenshot: browserState.screenshot || undefined,
-      tabs: browserState.tabs.map(tab => ({
+      tabs: (browserState.tabs || []).map(tab => ({
         id: tab.id,
         url: tab.url,
         title: tab.title,
@@ -92,8 +89,9 @@ abstract class BasePrompt {
     const redactedDom = textRedactor.redact(rawElementsText);
     const sanitizedElementsText = redactedDom.redactedText;
 
-    if (redactedDom.redactions.length > 0) {
-      logger.info(`[PrivacyGateway] Protected ${redactedDom.redactions.length} sensitive item(s) in DOM context`);
+    const redactionCount = (redactedDom.records || redactedDom.redactions || []).length;
+    if (redactionCount > 0) {
+      logger.info(`[PrivacyGateway] Protected ${redactionCount} sensitive item(s) in DOM context`);
       try {
         await privacySettingsStore.incrementCounter('redactedContexts');
       } catch {
@@ -126,7 +124,7 @@ abstract class BasePrompt {
     stepInfoDescription += `Current date and time: ${timeStr}`;
 
     let actionResultsDescription = '';
-    if (context.actionResults.length > 0) {
+    if (context.actionResults && context.actionResults.length > 0) {
       for (let i = 0; i < context.actionResults.length; i++) {
         const result = context.actionResults[i];
         if (result.extractedContent) {
@@ -142,10 +140,10 @@ abstract class BasePrompt {
     }
 
     const currentTab = `{id: ${browserState.tabId}, url: ${browserState.url}, title: ${browserState.title}}`;
-    const otherTabs = browserState.tabs
+    const otherTabs = (browserState.tabs || [])
       .filter(tab => tab.id !== browserState.tabId)
       .map(tab => `- {id: ${tab.id}, url: ${tab.url}, title: ${tab.title}}`);
-    
+
     const stateDescription = `
 [Task history memory ends]
 [Current state starts here]

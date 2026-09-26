@@ -240,7 +240,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       }
 
       const errorString = `Navigation failed: ${errorMessage}`;
-      logger.error(errorString);
+      logger.error(errorString, error);
       this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.STEP_FAIL, errorString);
       agentOutput.error = errorMessage;
       return agentOutput;
@@ -291,7 +291,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       : new TextRedactor();
 
     // Handle results that should be included in memory
-    if (this.context.actionResults.length > 0) {
+    if (this.context.actionResults && this.context.actionResults.length > 0) {
       let index = 0;
       for (const r of this.context.actionResults) {
         if (r.includeInMemory) {

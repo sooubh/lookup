@@ -341,9 +341,9 @@ export default class MessageManager {
         }
       }
     } else {
-      let msg = message.content;
+      let msg = typeof message.content === 'string' ? message.content : message.content ? String(message.content) : '';
       // Check if it's an AIMessage with tool_calls
-      if ('tool_calls' in message) {
+      if ('tool_calls' in message && message.tool_calls) {
         msg += JSON.stringify(message.tool_calls);
       }
       tokens += this._countTextTokens(msg);
@@ -358,8 +358,10 @@ export default class MessageManager {
    * @param text - The text to count the tokens
    * @returns The number of tokens in the text
    */
-  private _countTextTokens(text: string): number {
-    return Math.floor(text.length / this.settings.estimatedCharactersPerToken);
+  private _countTextTokens(text?: string | null): number {
+    if (!text) return 0;
+    const str = typeof text === 'string' ? text : String(text);
+    return Math.floor(str.length / this.settings.estimatedCharactersPerToken);
   }
 
   /**

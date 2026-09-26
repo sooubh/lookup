@@ -40,11 +40,20 @@ export function extractRawDomElementsFromBrowserState(
       }
     }
 
+    const safeAttributes: Record<string, string> = {};
+    if (node.attributes) {
+      for (const [k, v] of Object.entries(node.attributes)) {
+        if (v !== undefined && v !== null) {
+          safeAttributes[k] = typeof v === 'string' ? v : String(v);
+        }
+      }
+    }
+
     return {
       tag: (node.tagName || 'div').toLowerCase(),
       selector,
       text: text && text.trim() ? text.trim() : undefined,
-      attributes: { ...(node.attributes || {}) },
+      attributes: safeAttributes,
       bbox,
       isVisible: node.isVisible,
     };

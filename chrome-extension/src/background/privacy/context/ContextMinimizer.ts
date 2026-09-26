@@ -2,21 +2,13 @@ import type { RawBrowserContext, RawDomElement, ContextNeed } from '../core/Priv
 
 /**
  * ContextMinimizer
- * 
+ *
  * Enforces the "Minimum Disclosure" principle by filtering out non-essential
  * DOM elements, non-active tabs, and volatile/irrelevant element attributes
  * before sending to perception/detection pipelines.
  */
 export class ContextMinimizer {
-  private static readonly DISALLOWED_TAGS = new Set([
-    'script',
-    'style',
-    'noscript',
-    'svg',
-    'link',
-    'meta',
-    'iframe',
-  ]);
+  private static readonly DISALLOWED_TAGS = new Set(['script', 'style', 'noscript', 'svg', 'link', 'meta', 'iframe']);
 
   private static readonly ALLOWED_ATTRIBUTES = new Set([
     'id',
@@ -37,11 +29,7 @@ export class ContextMinimizer {
     'data-testid',
   ]);
 
-  public minimize(
-    context: RawBrowserContext,
-    need: ContextNeed,
-    maxElements = 250
-  ): RawBrowserContext {
+  public minimize(context: RawBrowserContext, need: ContextNeed, maxElements = 250): RawBrowserContext {
     const minimized: RawBrowserContext = {
       task: context.task,
       step: context.step,
@@ -52,7 +40,7 @@ export class ContextMinimizer {
 
     // 1. Tab minimization: keep only the active tab
     if (context.tabs && context.tabs.length > 0) {
-      const activeTab = context.tabs.find((t) => t.active) || context.tabs[0];
+      const activeTab = context.tabs.find(t => t.active) || context.tabs[0];
       minimized.tabs = [activeTab];
     }
 
@@ -91,8 +79,11 @@ export class ContextMinimizer {
         for (const [key, value] of Object.entries(node.attributes)) {
           const keyLower = key.toLowerCase();
           if (ContextMinimizer.ALLOWED_ATTRIBUTES.has(keyLower)) {
-            // Cap attribute value length to prevent payload bloat
-            filteredAttributes[key] = value.length > 200 ? value.substring(0, 200) + '...' : value;
+            // Cap attribute value length safely to prevent payload bloat or undefined crashes
+            if (value !== undefined && value !== null) {
+              const strVal = typeof value === 'string' ? value : String(value);
+              filteredAttributes[key] = strVal.length > 200 ? strVal.substring(0, 200) + '...' : strVal;
+            }
           }
         }
       }

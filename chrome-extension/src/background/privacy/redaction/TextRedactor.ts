@@ -1,9 +1,15 @@
 import type { SensitiveCategory, RedactionRecord, RedactionMethod, FusedFinding } from '../core/PrivacyTypes';
 import { PatternDetector } from '../detection/PatternDetector';
 
+export interface TextRedactionResult {
+  redactedText: string;
+  records: RedactionRecord[];
+  redactions: RedactionRecord[];
+}
+
 /**
  * TextRedactor
- * 
+ *
  * Replaces sensitive textual values with masked placeholders or deterministic
  * anonymous tokens (e.g. [EMAIL_1], [PHONE_1]) to preserve agent relational reasoning
  * without exposing raw private data to external models.
@@ -22,13 +28,9 @@ export class TextRedactor {
     this.tokenMap.clear();
   }
 
-  public redact(
-    text: string,
-    findings?: FusedFinding[],
-    method: RedactionMethod = 'token'
-  ): { redactedText: string; records: RedactionRecord[] } {
-    if (!text || text.length === 0) {
-      return { redactedText: text, records: [] };
+  public redact(text: string, findings?: FusedFinding[], method: RedactionMethod = 'token'): TextRedactionResult {
+    if (!text || typeof text !== 'string' || text.length === 0) {
+      return { redactedText: typeof text === 'string' ? text : '', records: [], redactions: [] };
     }
 
     const records: RedactionRecord[] = [];
@@ -56,7 +58,7 @@ export class TextRedactor {
     // Also run pattern detection to catch any unanchored sensitive patterns in text
     const patternMatches = this.patternDetector.detect(redactedText);
     for (const pm of patternMatches) {
-      if (!targets.some((t) => t.text === pm.matchedText)) {
+      if (!targets.some(t => t.text === pm.matchedText)) {
         targets.push({
           category: pm.category,
           text: pm.matchedText,
@@ -89,14 +91,10 @@ export class TextRedactor {
       });
     }
 
-    return { redactedText, records };
+    return { redactedText, records, redactions: records };
   }
 
-  private getReplacementToken(
-    category: SensitiveCategory,
-    rawValue: string,
-    method: RedactionMethod
-  ): string {
+  private getReplacementToken(category: SensitiveCategory, rawValue: string, method: RedactionMethod): string {
     if (method === 'mask') {
       return `[${category}_REDACTED]`;
     }

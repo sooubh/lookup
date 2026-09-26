@@ -24,7 +24,7 @@ export interface RedactionEngineResult {
 
 /**
  * RedactionEngine
- * 
+ *
  * Master orchestrator for multi-modal context sanitization.
  * Coordinates DOM string sanitization, tokenization, OCR masking,
  * and image bounding box pixel masking.
@@ -34,11 +34,7 @@ export class RedactionEngine {
   private regionMasker: RegionMasker;
   private imageRedactor: ImageRedactor;
 
-  constructor(
-    textRedactor?: TextRedactor,
-    regionMasker?: RegionMasker,
-    imageRedactor?: ImageRedactor
-  ) {
+  constructor(textRedactor?: TextRedactor, regionMasker?: RegionMasker, imageRedactor?: ImageRedactor) {
     this.textRedactor = textRedactor || new TextRedactor();
     this.regionMasker = regionMasker || new RegionMasker();
     this.imageRedactor = imageRedactor || new ImageRedactor();
@@ -91,8 +87,9 @@ export class RedactionEngine {
 
         // Check if element has any matching findings by selector or bbox
         const matchingFindings = findings.filter(
-          f => (f.selector && el.selector && f.selector === el.selector) ||
-               (f.bbox && el.bbox && f.bbox.x === el.bbox.x && f.bbox.y === el.bbox.y)
+          f =>
+            (f.selector && el.selector && f.selector === el.selector) ||
+            (f.bbox && el.bbox && f.bbox.x === el.bbox.x && f.bbox.y === el.bbox.y),
         );
 
         if (matchingFindings.length > 0) {
@@ -128,18 +125,22 @@ export class RedactionEngine {
 
         // Redact attributes
         const sanitizedAttributes: Record<string, string> = {};
-        for (const [k, v] of Object.entries(el.attributes)) {
-          // If password field value or sensitive attribute, redact completely
-          if (k.toLowerCase() === 'value' && el.attributes.type === 'password') {
-            sanitizedAttributes[k] = '[PASSWORD_REDACTED]';
-            isRedacted = true;
-          } else {
-            const { redactedText, records } = this.textRedactor.redact(v, findings, method);
-            sanitizedAttributes[k] = redactedText;
-            if (records.length > 0) {
+        if (el.attributes) {
+          for (const [k, v] of Object.entries(el.attributes)) {
+            if (v === undefined || v === null) continue;
+            const strVal = typeof v === 'string' ? v : String(v);
+            // If password field value or sensitive attribute, redact completely
+            if (k.toLowerCase() === 'value' && el.attributes.type === 'password') {
+              sanitizedAttributes[k] = '[PASSWORD_REDACTED]';
               isRedacted = true;
-              for (const r of records) {
-                allRecords.push({ ...r, selector: el.selector, bbox: el.bbox });
+            } else {
+              const { redactedText, records } = this.textRedactor.redact(strVal, findings, method);
+              sanitizedAttributes[k] = redactedText;
+              if (records.length > 0) {
+                isRedacted = true;
+                for (const r of records) {
+                  allRecords.push({ ...r, selector: el.selector, bbox: el.bbox });
+                }
               }
             }
           }
