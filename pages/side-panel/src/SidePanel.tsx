@@ -53,6 +53,7 @@ const SidePanel = () => {
   const [privacyConfig, setPrivacyConfig] = useState<PrivacySettingsConfig>(DEFAULT_PRIVACY_SETTINGS);
   const [showPrivacyReport, setShowPrivacyReport] = useState(false);
   const [consentRequest, setConsentRequest] = useState<PrivacyConsentRequest | null>(null);
+  const [actionConsentRequest, setActionConsentRequest] = useState<PrivacyConsentRequest | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const isReplayingRef = useRef<boolean>(false);
   const portRef = useRef<chrome.runtime.Port | null>(null);
@@ -237,6 +238,72 @@ const SidePanel = () => {
         timestamp: Date.now(),
       });
       setConsentRequest(null);
+    },
+    [appendMessage],
+  );
+
+  const handleActionConsentDeny = useCallback(
+    (requestId: string) => {
+      try {
+        if (portRef.current?.name === 'side-panel-connection') {
+          portRef.current.postMessage({
+            type: 'privacy_action_consent_response',
+            requestId,
+            decision: 'deny',
+          });
+        }
+        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+          chrome.runtime
+            .sendMessage({
+              type: 'privacy_action_consent_response',
+              requestId,
+              decision: 'deny',
+            })
+            .catch(() => {});
+        }
+      } catch (error) {
+        console.error('Failed to send action consent deny response:', error);
+      }
+
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: '🛡️ Action denied: The agent will not interact with the protected element.',
+        timestamp: Date.now(),
+      });
+      setActionConsentRequest(null);
+    },
+    [appendMessage],
+  );
+
+  const handleActionConsentAllowOnce = useCallback(
+    (requestId: string) => {
+      try {
+        if (portRef.current?.name === 'side-panel-connection') {
+          portRef.current.postMessage({
+            type: 'privacy_action_consent_response',
+            requestId,
+            decision: 'allow_once',
+          });
+        }
+        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+          chrome.runtime
+            .sendMessage({
+              type: 'privacy_action_consent_response',
+              requestId,
+              decision: 'allow_once',
+            })
+            .catch(() => {});
+        }
+      } catch (error) {
+        console.error('Failed to send action consent allow response:', error);
+      }
+
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: '✅ Action approved: The agent will proceed with the protected element interaction.',
+        timestamp: Date.now(),
+      });
+      setActionConsentRequest(null);
     },
     [appendMessage],
   );
@@ -444,6 +511,19 @@ const SidePanel = () => {
             redactedFields: message.redactedFields,
             timestamp: message.timestamp || Date.now(),
           });
+        } else if (message && message.type === 'privacy_action_consent_request') {
+          setActionConsentRequest({
+            id: message.requestId || `action_consent_${Date.now()}`,
+            isActionConsent: true,
+            targetIndex: message.targetIndex,
+            actionName: message.actionName,
+            inputText: message.text,
+            elementDescription: message.elementDescription,
+            categories: message.category ? [message.category] : ['PROTECTED'],
+            severity: 'medium',
+            explanation: `The agent wants to perform "${message.actionName || 'input_text'}" on a protected ${message.category || 'sensitive'} element.${message.text ? ` Value: "${message.text}"` : ''}`,
+            timestamp: Date.now(),
+          });
         } else if (message && message.type === 'privacy_notice') {
           appendMessage({
             actor: Actors.SYSTEM,
@@ -515,10 +595,7 @@ const SidePanel = () => {
   // Listen for broadcast privacy consent requests via runtime messages
   useEffect(() => {
     const handleRuntimeMessage = (message: any, _sender: any, sendResponse: any) => {
-      if (
-        message &&
-        (message.type === 'privacy_consent_request' || message.type === 'PRIVACY_CONSENT_REQUEST')
-      ) {
+      if (message && (message.type === 'privacy_consent_request' || message.type === 'PRIVACY_CONSENT_REQUEST')) {
         setConsentRequest({
           id: message.id || message.requestId || `consent_${Date.now()}`,
           task: message.task,
@@ -529,6 +606,21 @@ const SidePanel = () => {
           contextWillSend: message.contextWillSend,
           redactedFields: message.redactedFields,
           timestamp: message.timestamp || Date.now(),
+        });
+        sendResponse?.({ acknowledged: true });
+      }
+      if (message && message.type === 'privacy_action_consent_request') {
+        setActionConsentRequest({
+          id: message.requestId || `action_consent_${Date.now()}`,
+          isActionConsent: true,
+          targetIndex: message.targetIndex,
+          actionName: message.actionName,
+          inputText: message.text,
+          elementDescription: message.elementDescription,
+          categories: message.category ? [message.category] : ['PROTECTED'],
+          severity: 'medium',
+          explanation: `The agent wants to perform "${message.actionName || 'input_text'}" on a protected ${message.category || 'sensitive'} element.${message.text ? ` Value: "${message.text}"` : ''}`,
+          timestamp: Date.now(),
         });
         sendResponse?.({ acknowledged: true });
       }
@@ -1346,6 +1438,13 @@ const SidePanel = () => {
         request={consentRequest}
         onDeny={handleConsentDeny}
         onAllowOnce={handleConsentAllowOnce}
+        isDarkMode={isDarkMode}
+      />
+      <PrivacyConsentModal
+        isOpen={actionConsentRequest !== null}
+        request={actionConsentRequest}
+        onDeny={handleActionConsentDeny}
+        onAllowOnce={handleActionConsentAllowOnce}
         isDarkMode={isDarkMode}
       />
       <PrivacyReportModal

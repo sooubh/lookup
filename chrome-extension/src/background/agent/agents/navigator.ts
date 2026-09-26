@@ -411,7 +411,27 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
           this.context,
         );
 
-        if (!validation.isValid) {
+        if (validation.requiresConsent && validation.consentPayload) {
+          // Pause and ask user for consent via port messaging
+          const consentResult = await this.requestActionConsent(validation.consentPayload);
+          if (consentResult === 'allow_once') {
+            // User approved - add to allowed list and continue with action execution
+            this.context.allowElement(validation.consentPayload.targetIndex);
+            logger.info(`User approved action on element ${validation.consentPayload.targetIndex}, proceeding`);
+          } else {
+            // User denied or timed out
+            const blockMsg = `Action [${actionName}] blocked: user denied interaction with protected element ${validation.consentPayload.targetIndex}.`;
+            logger.warning(blockMsg);
+            results.push(
+              new ActionResult({
+                error: blockMsg,
+                includeInMemory: true,
+              }),
+            );
+            errCount++;
+            continue;
+          }
+        } else if (!validation.isValid) {
           const blockMsg = `Action [${actionName}] blocked by Local Action Validator: ${validation.reason}`;
           logger.warning(blockMsg);
           results.push(
@@ -493,6 +513,64 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
       }
     }
     return results;
+  }
+
+  /**
+   * Request user consent for an action on a privacy-protected element.
+   * Sends a consent request to the Side Panel UI and waits for user response.
+   * Defaults to 'deny' after 45 second timeout (fail-closed).
+   */
+  private async requestActionConsent(consentPayload: {
+    targetIndex: number;
+    category: string;
+    actionName: string;
+    text?: string;
+    elementDescription?: string;
+  }): Promise<'allow_once' | 'deny'> {
+    const requestId = `action_consent_${Date.now()}_${consentPayload.targetIndex}`;
+
+    return new Promise<'allow_once' | 'deny'>(resolve => {
+      // Register a one-time listener for the response
+      const responseHandler = (message: any) => {
+        if (message && message.type === 'privacy_action_consent_resolved' && message.requestId === requestId) {
+          chrome.runtime.onMessage.removeListener(responseHandler);
+          clearTimeout(timeoutId);
+          resolve(message.decision === 'allow_once' ? 'allow_once' : 'deny');
+        }
+      };
+
+      chrome.runtime.onMessage.addListener(responseHandler);
+
+      // Send consent request to background service worker / Side Panel
+      const payload = {
+        type: 'privacy_action_consent_request',
+        requestId,
+        targetIndex: consentPayload.targetIndex,
+        category: consentPayload.category,
+        actionName: consentPayload.actionName,
+        text: consentPayload.text,
+        elementDescription: consentPayload.elementDescription,
+      };
+
+      // Emit via the event manager to reach the port
+      this.context.emitEvent(
+        Actors.NAVIGATOR,
+        ExecutionState.ACT_START,
+        `Waiting for user consent to interact with protected ${consentPayload.category} element (index ${consentPayload.targetIndex})`,
+      );
+
+      // Send via chrome.runtime to reach background, which will forward to port
+      chrome.runtime.sendMessage(payload).catch(() => {
+        logger.warning('Failed to send action consent request via runtime messaging');
+      });
+
+      // Fail-closed timeout: deny after 45 seconds
+      const timeoutId = setTimeout(() => {
+        chrome.runtime.onMessage.removeListener(responseHandler);
+        logger.warning(`Action consent request ${requestId} timed out after 45s, defaulting to deny`);
+        resolve('deny');
+      }, 45000);
+    });
   }
 
   /**

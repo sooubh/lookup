@@ -333,7 +333,9 @@ describe('End-to-End Privacy Hardening & Audit Verification', () => {
         mockSanitizedContext as SanitizedContext,
       );
       expect(selectRes.isValid).toBe(false);
-      expect(selectRes.reason).toContain('protected sensitive information');
+      expect(selectRes.requiresConsent).toBe(true);
+      expect(selectRes.reason).toContain('requires your approval');
+      expect(selectRes.consentPayload?.category).toBe('FINANCIAL');
 
       const getOptsRes = LocalActionValidator.validate(
         'get_dropdown_options',
@@ -342,7 +344,8 @@ describe('End-to-End Privacy Hardening & Audit Verification', () => {
         mockSanitizedContext as SanitizedContext,
       );
       expect(getOptsRes.isValid).toBe(false);
-      expect(getOptsRes.reason).toContain('protected sensitive information');
+      expect(getOptsRes.requiresConsent).toBe(true);
+      expect(getOptsRes.reason).toContain('requires your approval');
     });
 
     it('blocks dangerous search queries containing protocol prefixes', () => {

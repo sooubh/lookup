@@ -25,6 +25,7 @@ const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
 const pendingConsentResolvers = new Map<string, (decision: 'allow_once' | 'deny') => void>();
+const pendingActionConsentResolvers = new Map<string, (decision: 'allow_once' | 'deny') => void>();
 const SIDE_PANEL_URL = chrome.runtime.getURL('side-panel/index.html');
 
 // Setup side panel behavior
@@ -264,6 +265,25 @@ chrome.runtime.onConnect.addListener(port => {
             break;
           }
 
+          case 'privacy_action_consent_response': {
+            const reqId = message.requestId || message.id;
+            const resolver = pendingActionConsentResolvers.get(reqId);
+            if (resolver) {
+              pendingActionConsentResolvers.delete(reqId);
+              resolver(message.decision === 'allow_once' ? 'allow_once' : 'deny');
+              // Notify the navigator agent that the consent was resolved
+              chrome.runtime
+                .sendMessage({
+                  type: 'privacy_action_consent_resolved',
+                  requestId: reqId,
+                  decision: message.decision,
+                })
+                .catch(() => {});
+              return port.postMessage({ type: 'success' });
+            }
+            break;
+          }
+
           default:
             return port.postMessage({ type: 'error', error: t('errors_cmd_unknown', [message.type]) });
         }
@@ -285,9 +305,72 @@ chrome.runtime.onConnect.addListener(port => {
         resolver('deny');
       }
       pendingConsentResolvers.clear();
+
+      // Fail-closed: deny any pending action consent prompts
+      for (const [reqId, resolver] of pendingActionConsentResolvers.entries()) {
+        resolver('deny');
+        chrome.runtime
+          .sendMessage({
+            type: 'privacy_action_consent_resolved',
+            requestId: reqId,
+            decision: 'deny',
+          })
+          .catch(() => {});
+      }
+      pendingActionConsentResolvers.clear();
+
       currentExecutor?.cancel();
     });
   }
+});
+
+// Handle action consent requests from navigator agent
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message && message.type === 'privacy_action_consent_request') {
+    const requestId = message.requestId;
+    // Store a resolver so when the Side Panel responds, we can relay back
+    pendingActionConsentResolvers.set(requestId, decision => {
+      // The resolver is called from the port message handler
+      // The port handler already sends the resolved message back
+    });
+
+    // Forward to Side Panel via port
+    const payload = {
+      type: 'privacy_action_consent_request',
+      requestId: message.requestId,
+      targetIndex: message.targetIndex,
+      category: message.category,
+      actionName: message.actionName,
+      text: message.text,
+      elementDescription: message.elementDescription,
+    };
+    if (currentPort) {
+      try {
+        currentPort.postMessage(payload);
+      } catch {
+        // Port message error ignored
+      }
+    }
+
+    // Fail-closed timeout after 45s
+    setTimeout(() => {
+      if (pendingActionConsentResolvers.has(requestId)) {
+        pendingActionConsentResolvers.delete(requestId);
+        logger.warning(`Action consent request ${requestId} timed out; failing closed to deny.`);
+        chrome.runtime
+          .sendMessage({
+            type: 'privacy_action_consent_resolved',
+            requestId,
+            decision: 'deny',
+          })
+          .catch(() => {});
+      }
+    }, 45000);
+
+    sendResponse({ acknowledged: true });
+    return true; // Keep channel open for async response
+  }
+  return false;
 });
 
 async function setupExecutor(taskId: string, task: string, browserContext: BrowserContext) {

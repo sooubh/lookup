@@ -52,6 +52,7 @@ export class AgentContext {
   taskText: string;
   privacyPipeline?: any;
   lastSanitizedContext?: any;
+  allowedElementIndices: Set<number>;
 
   constructor(
     taskId: string,
@@ -77,6 +78,7 @@ export class AgentContext {
     this.history = new AgentStepHistory();
     this.finalAnswer = null;
     this.taskText = '';
+    this.allowedElementIndices = new Set();
   }
 
   async emitEvent(actor: Actors, state: ExecutionState, eventDetails: string) {
@@ -100,6 +102,18 @@ export class AgentContext {
   async stop() {
     this.stopped = true;
     setTimeout(() => this.controller.abort(), 300);
+  }
+
+  allowElement(index: number): void {
+    this.allowedElementIndices.add(index);
+  }
+
+  isElementAllowed(index: number): boolean {
+    return this.allowedElementIndices.has(index);
+  }
+
+  clearAllowedElements(): void {
+    this.allowedElementIndices.clear();
   }
 }
 

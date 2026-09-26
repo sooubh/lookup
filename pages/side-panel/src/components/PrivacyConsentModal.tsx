@@ -10,6 +10,12 @@ export interface PrivacyConsentRequest {
   explanation?: string;
   contextWillSend?: string;
   redactedFields?: string[];
+  // Action-level consent fields (for "Proceed Anyway" on protected element interactions)
+  isActionConsent?: boolean;
+  targetIndex?: number;
+  actionName?: string;
+  inputText?: string;
+  elementDescription?: string;
   timestamp?: number;
 }
 
@@ -51,11 +57,15 @@ export const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
 
   const defaultExplanation =
     request.explanation ||
-    'LOOKUP detected sensitive or ambiguous data fields on this page that may be required by your task. In accordance with your fail-closed privacy policy, no content will leave your device until you confirm.';
+    (request.isActionConsent
+      ? `The agent wants to interact with a protected ${(request.categories || []).join(', ')} field on this page. This element was flagged by the privacy pipeline. Approve to let the agent proceed with this specific action.`
+      : 'LOOKUP detected sensitive or ambiguous data fields on this page that may be required by your task. In accordance with your fail-closed privacy policy, no content will leave your device until you confirm.');
 
   const defaultWillSend =
     request.contextWillSend ||
-    'Only the sanitized task-relevant DOM elements. Personal identifiers, payment tokens, and sensitive visual regions will be masked or excluded.';
+    (request.isActionConsent
+      ? `The agent will perform the action "${request.actionName || 'input_text'}" on the protected element. This is a one-time approval for this specific interaction only.`
+      : 'Only the sanitized task-relevant DOM elements. Personal identifiers, payment tokens, and sensitive visual regions will be masked or excluded.');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
@@ -74,10 +84,10 @@ export const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
             </div>
             <div>
               <h3 id="privacy-consent-title" className="text-base font-bold text-amber-900 dark:text-amber-300">
-                Privacy Confirmation Required
+                {request.isActionConsent ? 'Proceed Anyway?' : 'Privacy Confirmation Required'}
               </h3>
               <p className="text-xs text-amber-700/80 dark:text-amber-400/80">
-                Case C · Ambiguous Context Detected
+                {request.isActionConsent ? 'Action Consent · Protected Element' : 'Case C · Ambiguous Context Detected'}
               </p>
             </div>
           </div>
@@ -92,6 +102,38 @@ export const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
 
         {/* Modal Body */}
         <div className="space-y-4 p-5 text-left text-sm max-h-[70vh] overflow-y-auto">
+          {/* Action-Level Consent Details */}
+          {request.isActionConsent && (
+            <div
+              className={`rounded-xl border p-3.5 ${isDarkMode ? 'border-amber-800 bg-amber-950/40' : 'border-amber-200 bg-amber-50'}`}>
+              <div className="mb-2 flex items-center gap-1.5 font-semibold text-xs text-amber-600 dark:text-amber-400">
+                <FiAlertTriangle className="h-3.5 w-3.5" />
+                Agent Action Requires Approval
+              </div>
+              <div className="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
+                <p>
+                  <span className="font-semibold">Action:</span>{' '}
+                  <code className="rounded bg-gray-200 dark:bg-slate-700 px-1.5 py-0.5 text-[11px] font-mono">
+                    {request.actionName || 'input_text'}
+                  </code>
+                </p>
+                {request.inputText && (
+                  <p>
+                    <span className="font-semibold">Value:</span>{' '}
+                    <code className="rounded bg-gray-200 dark:bg-slate-700 px-1.5 py-0.5 text-[11px] font-mono break-all">
+                      {request.inputText}
+                    </code>
+                  </p>
+                )}
+                {request.elementDescription && (
+                  <p>
+                    <span className="font-semibold">Target:</span> {request.elementDescription}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Detected Categories */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
@@ -123,33 +165,33 @@ export const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
           </div>
 
           {/* Explanation */}
-          <div className={`rounded-xl border p-3.5 ${isDarkMode ? 'border-slate-800 bg-slate-800/60' : 'border-gray-100 bg-gray-50'}`}>
+          <div
+            className={`rounded-xl border p-3.5 ${isDarkMode ? 'border-slate-800 bg-slate-800/60' : 'border-gray-100 bg-gray-50'}`}>
             <div className="mb-1 flex items-center gap-1.5 font-semibold text-xs text-sky-600 dark:text-sky-400">
               <FiInfo className="h-3.5 w-3.5" />
               Why confirmation is requested
             </div>
-            <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300">
-              {defaultExplanation}
-            </p>
+            <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300">{defaultExplanation}</p>
           </div>
 
           {/* Context Scope Disclosure */}
-          <div className={`rounded-xl border p-3.5 ${isDarkMode ? 'border-slate-800 bg-slate-800/60' : 'border-gray-100 bg-gray-50'}`}>
+          <div
+            className={`rounded-xl border p-3.5 ${isDarkMode ? 'border-slate-800 bg-slate-800/60' : 'border-gray-100 bg-gray-50'}`}>
             <span className="block mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               What will be transmitted if approved
             </span>
-            <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300">
-              {defaultWillSend}
-            </p>
+            <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-300">{defaultWillSend}</p>
           </div>
 
           <div className="text-[11px] text-gray-500 dark:text-gray-400">
-            <span className="font-semibold">Privacy Invariant:</span> Choosing Deny keeps all data strictly on your device.
+            <span className="font-semibold">Privacy Invariant:</span> Choosing Deny keeps all data strictly on your
+            device.
           </div>
         </div>
 
         {/* Modal Footer Actions */}
-        <div className={`flex items-center justify-end gap-3 border-t p-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/80' : 'border-gray-100 bg-gray-50'}`}>
+        <div
+          className={`flex items-center justify-end gap-3 border-t p-4 ${isDarkMode ? 'border-slate-800 bg-slate-900/80' : 'border-gray-100 bg-gray-50'}`}>
           <button
             type="button"
             autoFocus
@@ -163,7 +205,7 @@ export const PrivacyConsentModal: React.FC<PrivacyConsentModalProps> = ({
             onClick={() => onAllowOnce(request.id)}
             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-sky-500 transition-colors shadow-sm">
             <FiCheck className="h-4 w-4" />
-            Allow Once
+            {request.isActionConsent ? 'Proceed Anyway' : 'Allow Once'}
           </button>
         </div>
       </div>

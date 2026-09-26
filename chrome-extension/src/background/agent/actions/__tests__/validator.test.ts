@@ -22,11 +22,7 @@ describe('LocalActionValidator', () => {
   });
 
   it('allows safe HTTPS and HTTP navigation', () => {
-    const safeUrls = [
-      'https://www.google.com',
-      'http://localhost:3000',
-      'https://github.com/sooubh/lookup',
-    ];
+    const safeUrls = ['https://www.google.com', 'http://localhost:3000', 'https://github.com/sooubh/lookup'];
 
     for (const url of safeUrls) {
       const res = LocalActionValidator.validate('go_to_url', { url });
@@ -66,7 +62,10 @@ describe('LocalActionValidator', () => {
     );
 
     expect(res.isValid).toBe(false);
-    expect(res.reason).toContain('protected sensitive information');
+    expect(res.requiresConsent).toBe(true);
+    expect(res.reason).toContain('requires your approval');
+    expect(res.consentPayload?.targetIndex).toBe(4);
+    expect(res.consentPayload?.category).toBe('PAYMENT');
   });
 
   it('blocks disallowed prompt injection patterns in input_text', () => {

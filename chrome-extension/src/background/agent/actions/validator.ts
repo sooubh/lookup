@@ -9,6 +9,14 @@ export interface ActionValidationResult {
   isValid: boolean;
   reason?: string;
   sanitizedAction?: Record<string, unknown>;
+  requiresConsent?: boolean;
+  consentPayload?: {
+    targetIndex: number;
+    category: string;
+    actionName: string;
+    text?: string;
+    elementDescription?: string;
+  };
 }
 
 /**
@@ -144,11 +152,34 @@ export class LocalActionValidator {
           });
 
           if (isTargetRedacted) {
-            logger.warning(`Attempted action on protected/redacted element index ${targetIndex}`);
-            return {
-              isValid: false,
-              reason: `Interaction with element index ${targetIndex} was blocked: element contains protected sensitive information.`,
-            };
+            // If user already approved this element, allow it
+            if (_agentContext?.isElementAllowed(targetIndex)) {
+              logger.info(`Element index ${targetIndex} was previously approved by user, allowing action`);
+            } else {
+              // Find the category from redaction metadata
+              const matchingRedaction = sanitizedContext.redactions.find(
+                r =>
+                  r.selector?.includes(String(targetIndex)) ||
+                  r.reason?.includes(`[${targetIndex}]`) ||
+                  r.reason?.includes(`index ${targetIndex}`),
+              );
+              const category = matchingRedaction?.category || 'UNKNOWN';
+              const elementDesc = matchingRedaction?.reason || `element index ${targetIndex}`;
+
+              logger.warning(`Element index ${targetIndex} requires user consent (category: ${category})`);
+              return {
+                isValid: false,
+                requiresConsent: true,
+                reason: `Interaction with element index ${targetIndex} requires your approval: element contains protected ${category} information.`,
+                consentPayload: {
+                  targetIndex,
+                  category,
+                  actionName,
+                  text: typeof actionArgs.text === 'string' ? actionArgs.text : undefined,
+                  elementDescription: elementDesc,
+                },
+              };
+            }
           }
         }
 
@@ -159,13 +190,26 @@ export class LocalActionValidator {
               el.isRedacted &&
               el.selector &&
               (el.selector.includes(`[highlight_index="${targetIndex}"]`) ||
-                el.selector.includes(`highlightIndex='${targetIndex}'`))
+                el.selector.includes(`highlightIndex='${targetIndex}'`)),
           );
           if (matchingSanitizedEl) {
-            return {
-              isValid: false,
-              reason: `Interaction with element index ${targetIndex} was blocked: element is marked as redacted.`,
-            };
+            // If user already approved this element, allow it
+            if (_agentContext?.isElementAllowed(targetIndex)) {
+              logger.info(`Element index ${targetIndex} (isRedacted) was previously approved by user, allowing action`);
+            } else {
+              return {
+                isValid: false,
+                requiresConsent: true,
+                reason: `Interaction with element index ${targetIndex} requires your approval: element is marked as redacted.`,
+                consentPayload: {
+                  targetIndex,
+                  category: 'REDACTED',
+                  actionName,
+                  text: typeof actionArgs.text === 'string' ? actionArgs.text : undefined,
+                  elementDescription: `redacted element at index ${targetIndex}`,
+                },
+              };
+            }
           }
         }
       }
