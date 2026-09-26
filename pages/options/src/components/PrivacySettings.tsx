@@ -66,9 +66,9 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
     <section className="space-y-6">
       {/* Header Banner */}
       <div
-        className={`rounded-xl border ${
-          isDarkMode ? 'border-sky-900 bg-slate-800' : 'border-sky-100 bg-white'
-        } p-6 text-left shadow-sm`}>
+        className={`rounded-2xl border ${
+          isDarkMode ? 'border-slate-800 bg-[#0f141f]' : 'border-slate-200 bg-white'
+        } p-6 text-left shadow-xs`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500">
@@ -88,8 +88,8 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
               settings.mode === 'strict'
                 ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-500'
                 : settings.mode === 'balanced'
-                ? 'border border-sky-500/20 bg-sky-500/10 text-sky-500'
-                : 'border border-amber-500/20 bg-amber-500/10 text-amber-500'
+                  ? 'border border-sky-500/20 bg-sky-500/10 text-sky-500'
+                  : 'border border-amber-500/20 bg-amber-500/10 text-amber-500'
             }`}>
             <FiCheckCircle className="h-3.5 w-3.5" />
             {settings.mode} Policy Active
@@ -99,9 +99,9 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
 
       {/* Mode Selector Cards */}
       <div
-        className={`rounded-xl border ${
-          isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white'
-        } p-6 shadow-sm`}>
+        className={`rounded-2xl border ${
+          isDarkMode ? 'border-slate-800 bg-[#0f141f]' : 'border-slate-200 bg-white'
+        } p-6 shadow-xs`}>
         <h3 className={`mb-1 text-base font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
           Privacy Mode
         </h3>
@@ -122,8 +122,8 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
                   ? 'border-sky-500 bg-sky-950/40 ring-2 ring-sky-500/40'
                   : 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/30'
                 : isDarkMode
-                ? 'border-slate-700 bg-slate-800/70 hover:border-slate-600'
-                : 'border-gray-200 bg-gray-50/60 hover:border-gray-300'
+                  ? 'border-slate-700 bg-slate-800/70 hover:border-slate-600'
+                  : 'border-gray-200 bg-gray-50/60 hover:border-gray-300'
             }`}>
             <div className="mb-2 flex items-center justify-between">
               <span className="font-bold text-sky-500">Strict</span>
@@ -132,7 +132,8 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
               </span>
             </div>
             <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Full local perception. All sensitive categories automatically masked. Fail-closed egress. Prompts on any ambiguity.
+              Full local perception. All sensitive categories automatically masked. Fail-closed egress. Prompts on any
+              ambiguity.
             </p>
           </div>
 
@@ -148,8 +149,8 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
                   ? 'border-sky-500 bg-sky-950/40 ring-2 ring-sky-500/40'
                   : 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/30'
                 : isDarkMode
-                ? 'border-slate-700 bg-slate-800/70 hover:border-slate-600'
-                : 'border-gray-200 bg-gray-50/60 hover:border-gray-300'
+                  ? 'border-slate-700 bg-slate-800/70 hover:border-slate-600'
+                  : 'border-gray-200 bg-gray-50/60 hover:border-gray-300'
             }`}>
             <div className="mb-2 flex items-center justify-between">
               <span className={`font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Balanced</span>
@@ -171,8 +172,8 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
                   ? 'border-sky-500 bg-sky-950/40 ring-2 ring-sky-500/40'
                   : 'border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/30'
                 : isDarkMode
-                ? 'border-slate-700 bg-slate-800/70 hover:border-slate-600'
-                : 'border-gray-200 bg-gray-50/60 hover:border-gray-300'
+                  ? 'border-slate-700 bg-slate-800/70 hover:border-slate-600'
+                  : 'border-gray-200 bg-gray-50/60 hover:border-gray-300'
             }`}>
             <div className="mb-2 flex items-center justify-between">
               <span className={`font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Custom</span>
@@ -186,9 +187,9 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
 
       {/* Perception & Redaction Toggles */}
       <div
-        className={`rounded-xl border ${
-          isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white'
-        } p-6 shadow-sm`}>
+        className={`rounded-2xl border ${
+          isDarkMode ? 'border-slate-800 bg-[#0f141f]' : 'border-slate-200 bg-white'
+        } p-6 shadow-xs`}>
         <h3 className={`mb-4 text-base font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
           Perception & Egress Controls
         </h3>
@@ -429,9 +430,9 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
 
       {/* Privacy Audit Statistics & Telemetry */}
       <div
-        className={`rounded-xl border ${
-          isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white'
-        } p-6 shadow-sm`}>
+        className={`rounded-2xl border ${
+          isDarkMode ? 'border-slate-800 bg-[#0f141f]' : 'border-slate-200 bg-white'
+        } p-6 shadow-xs`}>
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h3 className={`text-base font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
@@ -497,10 +498,7 @@ export const PrivacySettings = ({ isDarkMode = false }: PrivacySettingsProps) =>
 
         <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs text-gray-500 dark:border-slate-700 dark:text-gray-400">
           <span>LOOKUP Privacy Invariant: Zero raw credentials or screenshots transmitted.</span>
-          <button
-            type="button"
-            onClick={handleResetDefaults}
-            className="cursor-pointer text-sky-500 hover:underline">
+          <button type="button" onClick={handleResetDefaults} className="cursor-pointer text-sky-500 hover:underline">
             Restore Default Strict Settings
           </button>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { FaMicrophone } from 'react-icons/fa';
+import { FiMic, FiPaperclip, FiX, FiSend, FiSquare, FiRotateCcw } from 'react-icons/fi';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { t } from '@extension/i18n';
 
@@ -101,7 +101,7 @@ export default function ChatInput({
             : `<nano_attached_files>${fileContents}</nano_attached_files>`;
 
           // Create display version with only filenames (for UI)
-          const fileList = attachedFiles.map(file => `📎 ${file.name}`).join('\n');
+          const fileList = attachedFiles.map(file => `[File: ${file.name}]`).join('\n');
           displayContent = trimmedText ? `${trimmedText}\n\n${fileList}` : fileList;
         }
 
@@ -185,31 +185,37 @@ export default function ChatInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`overflow-hidden rounded-lg border transition-colors ${disabled ? 'cursor-not-allowed' : 'focus-within:border-sky-400 hover:border-sky-400'} ${isDarkMode ? 'border-slate-700' : ''}`}
+      className={`overflow-hidden rounded-xl border transition-all duration-200 ${
+        disabled
+          ? 'cursor-not-allowed opacity-75'
+          : 'focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-500/20 hover:border-sky-400'
+      } ${isDarkMode ? 'border-slate-700/80 bg-slate-800/90 shadow-sm' : 'border-slate-200/90 bg-white shadow-2xs'}`}
       aria-label={t('chat_input_form')}>
       <div className="flex flex-col">
         {/* File attachments display */}
         {attachedFiles.length > 0 && (
           <div
-            className={`flex flex-wrap gap-2 border-b p-2 ${
-              isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50'
+            className={`flex flex-wrap gap-1.5 border-b p-2 ${
+              isDarkMode ? 'border-slate-700/70 bg-slate-800/60' : 'border-slate-100 bg-slate-50'
             }`}>
             {attachedFiles.map((file, index) => (
               <div
                 key={index}
-                className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs ${
-                  isDarkMode ? 'bg-slate-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                  isDarkMode ? 'bg-slate-700 text-slate-200' : 'bg-slate-200/80 text-slate-700'
                 }`}>
-                <span className="text-xs">📎</span>
-                <span className="max-w-[150px] truncate">{file.name}</span>
+                <FiPaperclip className="size-3 shrink-0 opacity-70" />
+                <span className="max-w-[140px] truncate">{file.name}</span>
                 <button
                   type="button"
                   onClick={() => handleRemoveFile(index)}
-                  className={`ml-1 rounded-sm transition-colors ${
-                    isDarkMode ? 'hover:bg-slate-600' : 'hover:bg-gray-300'
+                  className={`ml-0.5 rounded p-0.5 transition-colors ${
+                    isDarkMode
+                      ? 'hover:bg-slate-600 text-slate-400 hover:text-slate-100'
+                      : 'hover:bg-slate-300 text-slate-500 hover:text-slate-800'
                   }`}
                   aria-label={`Remove ${file.name}`}>
-                  <span className="text-xs">✕</span>
+                  <FiX className="size-3" />
                 </button>
               </div>
             ))}
@@ -223,40 +229,40 @@ export default function ChatInput({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           aria-disabled={disabled}
-          rows={5}
-          className={`w-full resize-none border-none p-2 focus:outline-none ${
+          rows={3}
+          className={`w-full resize-none border-none px-3.5 py-2.5 text-sm leading-relaxed focus:outline-none ${
             disabled
               ? isDarkMode
-                ? 'cursor-not-allowed bg-slate-800 text-gray-400'
-                : 'cursor-not-allowed bg-gray-100 text-gray-500'
+                ? 'cursor-not-allowed bg-transparent text-slate-500 placeholder-slate-600'
+                : 'cursor-not-allowed bg-transparent text-slate-400 placeholder-slate-400'
               : isDarkMode
-                ? 'bg-slate-800 text-gray-200'
-                : 'bg-white'
+                ? 'bg-transparent text-slate-100 placeholder-slate-400'
+                : 'bg-transparent text-slate-800 placeholder-slate-400'
           }`}
           placeholder={attachedFiles.length > 0 ? 'Add a message (optional)...' : t('chat_input_placeholder')}
           aria-label={t('chat_input_editor')}
         />
 
         <div
-          className={`flex items-center justify-between px-2 py-1.5 ${
-            disabled ? (isDarkMode ? 'bg-slate-800' : 'bg-gray-100') : isDarkMode ? 'bg-slate-800' : 'bg-white'
+          className={`flex items-center justify-between px-3 py-2 border-t ${
+            isDarkMode ? 'border-slate-700/50 bg-slate-800/40' : 'border-slate-100 bg-slate-50/50'
           }`}>
-          <div className="flex gap-2 text-gray-500">
+          <div className="flex items-center gap-1 text-slate-500">
             {/* File attachment button */}
             <button
               type="button"
               onClick={handleFileSelect}
               disabled={disabled}
               aria-label="Attach files"
-              title="Attach text files (txt, md, json, csv, etc.)"
-              className={`rounded-md p-1.5 transition-colors ${
+              title="Attach text files (.txt, .md, .json, etc.)"
+              className={`rounded-lg p-1.5 transition-all ${
                 disabled
-                  ? 'cursor-not-allowed opacity-50'
+                  ? 'cursor-not-allowed opacity-40'
                   : isDarkMode
-                    ? 'text-gray-400 hover:bg-slate-700 hover:text-gray-200'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                    ? 'text-slate-400 hover:bg-slate-700/80 hover:text-slate-200 active:scale-95'
+                    : 'text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 active:scale-95'
               }`}>
-              <span className="text-lg">📎</span>
+              <FiPaperclip className="size-4" />
             </button>
 
             {/* Hidden file input */}
@@ -282,49 +288,62 @@ export default function ChatInput({
                       ? t('chat_stt_recording_stop')
                       : t('chat_stt_input_start')
                 }
-                className={`rounded-md p-1.5 transition-colors ${
+                className={`rounded-lg p-1.5 transition-all ${
                   disabled || isProcessingSpeech
-                    ? 'cursor-not-allowed opacity-50'
+                    ? 'cursor-not-allowed opacity-40'
                     : isRecording
-                      ? 'bg-red-500 text-white hover:bg-red-600'
+                      ? 'bg-rose-500 text-white hover:bg-rose-600 animate-pulse'
                       : isDarkMode
-                        ? 'text-gray-400 hover:bg-slate-700 hover:text-gray-200'
-                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                        ? 'text-slate-400 hover:bg-slate-700/80 hover:text-slate-200 active:scale-95'
+                        : 'text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 active:scale-95'
                 }`}>
                 {isProcessingSpeech ? (
-                  <AiOutlineLoading3Quarters className="size-4 animate-spin" />
+                  <AiOutlineLoading3Quarters className="size-4 animate-spin text-sky-500" />
                 ) : (
-                  <FaMicrophone className={`size-4 ${isRecording ? 'animate-pulse' : ''}`} />
+                  <FiMic className="size-4" />
                 )}
               </button>
             )}
           </div>
 
-          {showStopButton ? (
-            <button
-              type="button"
-              onClick={onStopTask}
-              className="rounded-md bg-red-500 px-3 py-1 text-white transition-colors hover:bg-red-600">
-              {t('chat_buttons_stop')}
-            </button>
-          ) : historicalSessionId ? (
-            <button
-              type="button"
-              onClick={handleReplay}
-              disabled={!historicalSessionId}
-              aria-disabled={!historicalSessionId}
-              className={`rounded-md bg-green-500 px-3 py-1 text-white transition-colors hover:enabled:bg-green-600 ${!historicalSessionId ? 'cursor-not-allowed opacity-50' : ''}`}>
-              {t('chat_buttons_replay')}
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={isSendButtonDisabled}
-              aria-disabled={isSendButtonDisabled}
-              className={`rounded-md bg-[#19C2FF] px-3 py-1 text-white transition-colors hover:enabled:bg-[#0073DC] ${isSendButtonDisabled ? 'cursor-not-allowed opacity-50' : ''}`}>
-              {t('chat_buttons_send')}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {showStopButton ? (
+              <button
+                type="button"
+                onClick={onStopTask}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs transition-all hover:bg-rose-500 active:scale-95">
+                <FiSquare className="size-3" />
+                <span>{t('chat_buttons_stop')}</span>
+              </button>
+            ) : historicalSessionId ? (
+              <button
+                type="button"
+                onClick={handleReplay}
+                disabled={!historicalSessionId}
+                aria-disabled={!historicalSessionId}
+                className={`inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-2xs transition-all hover:enabled:bg-emerald-500 active:scale-95 ${
+                  !historicalSessionId ? 'cursor-not-allowed opacity-50' : ''
+                }`}>
+                <FiRotateCcw className="size-3" />
+                <span>{t('chat_buttons_replay')}</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isSendButtonDisabled}
+                aria-disabled={isSendButtonDisabled}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs transition-all ${
+                  isSendButtonDisabled
+                    ? isDarkMode
+                      ? 'bg-slate-700 text-slate-500 cursor-not-allowed opacity-50'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 active:scale-95 cursor-pointer shadow-sky-500/20'
+                }`}>
+                <span>{t('chat_buttons_send')}</span>
+                <FiSend className="size-3" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </form>

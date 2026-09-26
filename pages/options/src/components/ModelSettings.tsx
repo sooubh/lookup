@@ -1128,8 +1128,8 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
     <section className="space-y-6">
       {/* LLM Providers Section */}
       <div
-        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+        className={`rounded-2xl border ${isDarkMode ? 'border-slate-800 bg-[#0f141f]' : 'border-slate-200 bg-white'} p-6 text-left shadow-xs`}>
+        <h2 className={`mb-4 text-xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
           {t('options_models_providers_header')}
         </h2>
         <div className="space-y-6">
@@ -1623,8 +1623,9 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
 
       {/* Updated Agent Models Section */}
       <div
-        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+        className={`rounded-2xl border ${isDarkMode ? 'border-slate-800 bg-[#0f141f]' : 'border-slate-200 bg-white'} p-6 text-left shadow-xs`}>
+        <h2
+          className={`mb-4 text-left text-xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
           {t('options_models_selection_header')}
         </h2>
         <div className="space-y-4">
@@ -1636,8 +1637,9 @@ export const ModelSettings = ({ isDarkMode = false }: ModelSettingsProps) => {
 
       {/* Speech-to-Text Model Selection */}
       <div
-        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-gray-50'} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+        className={`rounded-2xl border ${isDarkMode ? 'border-slate-800 bg-[#0f141f]' : 'border-slate-200 bg-white'} p-6 text-left shadow-xs`}>
+        <h2
+          className={`mb-4 text-left text-xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
           {t('options_models_speechToText_header')}
         </h2>
         <p className={`mb-4 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>

@@ -30,8 +30,9 @@ export const GeneralSettings = ({ isDarkMode = false }: GeneralSettingsProps) =>
   return (
     <section className="space-y-6">
       <div
-        className={`rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-blue-100 bg-white'} p-6 text-left shadow-sm`}>
-        <h2 className={`mb-4 text-left text-xl font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+        className={`rounded-2xl border ${isDarkMode ? 'border-slate-800 bg-[#0f141f]' : 'border-slate-200 bg-white'} p-6 text-left shadow-xs`}>
+        <h2
+          className={`mb-4 text-left text-xl font-bold tracking-tight ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}`}>
           {t('options_general_header')}
         </h2>
 
