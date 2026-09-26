@@ -1,6 +1,6 @@
 /**
  * LOOKUP Privacy Subsystem
- * 
+ *
  * Local privacy enforcement plane ensuring raw browser context never crosses
  * to the remote AI tier without evaluation, redaction, and egress gate authorization.
  */
@@ -25,6 +25,7 @@ export * from './perception/WebGpuRuntime';
 export * from './perception/WasmFallback';
 export * from './perception/OcrEngine';
 export * from './perception/LocalVisionEngine';
+export * from './perception/LocalSemanticEngine';
 export * from './perception/PerceptionRouter';
 
 // Detection
@@ -32,6 +33,7 @@ export * from './detection/PatternDetector';
 export * from './detection/DomDetector';
 export * from './detection/OcrDetector';
 export * from './detection/VisionDetector';
+export * from './detection/SemanticDetector';
 export * from './detection/EvidenceFusion';
 export * from './detection/SensitiveDetector';
 

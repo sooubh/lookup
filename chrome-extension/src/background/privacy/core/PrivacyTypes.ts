@@ -1,6 +1,6 @@
 /**
  * Core type definitions for the LOOKUP Privacy Subsystem.
- * 
+ *
  * Defines categories, decisions, contracts, and evidence structures
  * used across perception, detection, policy, redaction, and egress gating.
  */
@@ -23,16 +23,11 @@ export type SensitiveCategory =
   | 'BUSINESS_CONFIDENTIAL'
   | 'OTHER_SENSITIVE';
 
-export type PrivacyDecision =
-  | 'ALLOW'
-  | 'MINIMIZE'
-  | 'REDACT'
-  | 'ASK_USER'
-  | 'BLOCK';
+export type PrivacyDecision = 'ALLOW' | 'MINIMIZE' | 'REDACT' | 'ASK_USER' | 'BLOCK';
 
 export type StrictnessMode = 'strict' | 'balanced' | 'permissive' | 'custom';
 
-export type DetectionSource = 'dom' | 'pattern' | 'ocr' | 'vision';
+export type DetectionSource = 'dom' | 'pattern' | 'ocr' | 'vision' | 'model';
 
 export type FindingSeverity = 'low' | 'medium' | 'high' | 'critical';
 
@@ -73,16 +68,12 @@ export interface ContextNeed {
   screenshotRegions?: BoundingBox[];
   needsOcr: boolean;
   needsVision: boolean;
+  needsSemanticModel?: boolean;
   requiredFields: string[];
   reason: string;
 }
 
-export type RedactionMethod =
-  | 'mask'
-  | 'token'
-  | 'blur'
-  | 'remove'
-  | 'region_exclusion';
+export type RedactionMethod = 'mask' | 'token' | 'blur' | 'remove' | 'region_exclusion';
 
 export interface RedactionRecord {
   id: string;
