@@ -1,7 +1,7 @@
 {
   "name": "@extension/shared",
   "version": "0.1.13",
-  "description": "chrome extension - shared code",
+  "description": "LOOKUP extension - shared code",
   "private": true,
   "sideEffects": false,
   "files": [

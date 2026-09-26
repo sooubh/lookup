@@ -1,7 +1,7 @@
 {
   "name": "@extension/hmr",
   "version": "0.1.13",
-  "description": "chrome extension - hot module reload/refresh",
+  "description": "LOOKUP extension - hot module reload/refresh",
   "private": true,
   "sideEffects": true,
   "files": [

@@ -1,11 +1,15 @@
 {
-  "name": "nanobrowser",
+  "name": "lookup",
   "version": "0.1.13",
-  "description": "AI web automation tool",
+  "description": "LOOKUP: Privacy-Preserving AI Web Agent & Browser Automation",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nanobrowser/nanobrowser.git"
+    "url": "https://github.com/sooubh/lookup.git"
+  },
+  "homepage": "https://github.com/sooubh/lookup",
+  "bugs": {
+    "url": "https://github.com/sooubh/lookup/issues"
   },
   "type": "module",
   "scripts": {

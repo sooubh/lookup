@@ -73,6 +73,7 @@ code {
 .header-logo {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .header-icons {

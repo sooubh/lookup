@@ -28,6 +28,8 @@ import { convertZodToJsonSchema, repairJsonString } from '@src/background/utils'
 import { HistoryTreeProcessor } from '@src/background/browser/dom/history/service';
 import { AgentStepRecord } from '../history';
 import { type DOMHistoryElement } from '@src/background/browser/dom/history/view';
+import { LocalActionValidator } from '../actions/validator';
+import { TextRedactor } from '../../privacy/redaction/TextRedactor';
 
 const logger = createLogger('NavigatorAgent');
 
@@ -249,13 +251,19 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
         this.context.emitEvent(Actors.NAVIGATOR, ExecutionState.STEP_CANCEL, 'Navigation cancelled');
       }
       if (browserStateHistory) {
-        // Create a copy of actionResults to store in history
+        const textRedactor = this.context.privacyPipeline
+          ? this.context.privacyPipeline.getRedactionEngine().getTextRedactor()
+          : new TextRedactor();
+
+        // Create a copy of actionResults to store in history with privacy redaction
         const actionResultsCopy = actionResults.map(result => {
           return new ActionResult({
             isDone: result.isDone,
             success: result.success,
-            extractedContent: result.extractedContent,
-            error: result.error,
+            extractedContent: result.extractedContent
+              ? textRedactor.redact(result.extractedContent).redactedText
+              : result.extractedContent,
+            error: result.error ? textRedactor.redact(result.error).redactedText : result.error,
             includeInMemory: result.includeInMemory,
             interactedElement: result.interactedElement,
           });
@@ -278,13 +286,18 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
     }
 
     const messageManager = this.context.messageManager;
+    const textRedactor = this.context.privacyPipeline
+      ? this.context.privacyPipeline.getRedactionEngine().getTextRedactor()
+      : new TextRedactor();
+
     // Handle results that should be included in memory
     if (this.context.actionResults.length > 0) {
       let index = 0;
       for (const r of this.context.actionResults) {
         if (r.includeInMemory) {
           if (r.extractedContent) {
-            const msg = new HumanMessage(`Action result: ${r.extractedContent}`);
+            const redactedContent = textRedactor.redact(r.extractedContent).redactedText;
+            const msg = new HumanMessage(`Action result: ${redactedContent}`);
             // logger.info('Adding action result to memory', msg.content);
             messageManager.addMessageWithTokens(msg);
           }
@@ -294,8 +307,9 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
 
             // Get only the last line of the error
             const lastLine = errorText.split('\n').pop() || '';
+            const redactedError = textRedactor.redact(lastLine).redactedText;
 
-            const msg = new HumanMessage(`Action error: ${lastLine}`);
+            const msg = new HumanMessage(`Action error: ${redactedError}`);
             logger.info('Adding action error to memory', msg.content);
             messageManager.addMessageWithTokens(msg);
           }
@@ -369,7 +383,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
     logger.info('Actions', actions);
 
     const browserContext = this.context.browserContext;
-    const browserState = await browserContext.getState(this.context.options.useVision);
+    let browserState = await browserContext.getState(this.context.options.useVision);
     const cachedPathHashes = await calcBranchPathHashSet(browserState);
 
     await browserContext.removeHighlight();
@@ -388,6 +402,28 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
           throw new Error(`Action ${actionName} not exists`);
         }
 
+        // Validate proposed action through Local Action Validator
+        const validation = LocalActionValidator.validate(
+          actionName,
+          (actionArgs as Record<string, unknown>) || {},
+          browserState,
+          this.context.lastSanitizedContext,
+          this.context,
+        );
+
+        if (!validation.isValid) {
+          const blockMsg = `Action [${actionName}] blocked by Local Action Validator: ${validation.reason}`;
+          logger.warning(blockMsg);
+          results.push(
+            new ActionResult({
+              error: blockMsg,
+              includeInMemory: true,
+            }),
+          );
+          errCount++;
+          continue;
+        }
+
         const indexArg = actionInstance.getIndexArg(actionArgs);
         if (i > 0 && indexArg !== null) {
           const newState = await browserContext.getState(this.context.options.useVision);
@@ -404,6 +440,7 @@ export class NavigatorAgent extends BaseAgent<z.ZodType, NavigatorResult> {
             );
             break;
           }
+          browserState = newState;
         }
 
         const result = await actionInstance.call(actionArgs);

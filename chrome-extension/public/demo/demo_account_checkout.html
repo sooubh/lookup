@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOOKUP Demo 2 — E-Commerce Account Checkout</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0284c7;
+      --border: #e2e8f0;
+      --badge-warn-bg: #fef2f2;
+      --badge-warn-border: #fecaca;
+      --badge-warn-text: #991b1b;
+      --redacted-bg: #fee2e2;
+      --redacted-border: #ef4444;
+      --redacted-text: #b91c1c;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 60px;
+    }
+    .banner {
+      background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .banner h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .banner .shield-icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+    .privacy-tag {
+      background: white;
+      color: #991b1b;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .container {
+      max-width: 1080px;
+      margin: 24px auto;
+      padding: 0 20px;
+    }
+    .spec-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .spec-card h2 {
+      font-size: 1.1rem;
+      color: #991b1b;
+      margin-bottom: 8px;
+    }
+    .spec-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .spec-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .category-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
+    .spec-item {
+      font-size: 0.88rem;
+    }
+    .spec-label {
+      color: var(--text-muted);
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    .spec-val {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .preview-toggle-bar {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .preview-toggle-btn {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .preview-toggle-btn:hover {
+      background: #0369a1;
+    }
+    .checkout-layout {
+      display: grid;
+      grid-template-columns: 1.8fr 1.2fr;
+      gap: 24px;
+    }
+    @media (max-width: 820px) {
+      .checkout-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .section-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0f172a;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group.full {
+      grid-column: span 2;
+    }
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #0f172a;
+      background: #f8fafc;
+    }
+    .sensitive-field {
+      position: relative;
+    }
+    .sensitive-field.redacted input {
+      background: var(--redacted-bg);
+      color: transparent;
+      text-shadow: 0 0 10px rgba(185, 28, 28, 0.7);
+      border-color: var(--redacted-border);
+      user-select: none;
+    }
+    .sensitive-field.redacted::after {
+      content: attr(data-mask-label);
+      position: absolute;
+      left: 12px;
+      top: 33px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--redacted-text);
+      pointer-events: none;
+    }
+    .order-summary-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      height: fit-content;
+    }
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 0.92rem;
+    }
+    .item-title {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .item-qty {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .summary-divider {
+      border-top: 1px dashed var(--border);
+      margin: 16px 0;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .btn-pay {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      border: none;
+      background: #16a34a;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .nav-link {
+      display: inline-block;
+      margin-top: 24px;
+      color: #0284c7;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <h1>
+      <svg class="shield-icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v6h-2V7zm0 8h2v2h-2v-2z"/></svg>
+      LOOKUP Demo Suite · Scenario 2: E-Commerce Checkout with Account Info
+    </h1>
+    <div class="privacy-tag">
+      🛡️ Expected Decision: REDACT (AUTOMATIC)
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="spec-card">
+      <h2>Scenario Objective & Privacy Specification</h2>
+      <p>This page contains live account, contact, identity, and payment data. LOOKUP's local perception layer must detect all sensitive tokens, exclude raw pixels/DOM nodes, and redact them before sending any payload to remote AI.</p>
+      
+      <div class="spec-badges">
+        <span class="category-badge">💳 PAYMENT: Credit Card & CVV</span>
+        <span class="category-badge">✉️ CONTACT: Email & Phone</span>
+        <span class="category-badge">🆔 PERSONAL_IDENTITY: SSN & Name</span>
+        <span class="category-badge">🏦 FINANCIAL: Billing Address & Balances</span>
+      </div>
+
+      <div class="spec-grid">
+        <div class="spec-item">
+          <span class="spec-label">Expected Privacy Gateway Evaluation</span>
+          <span class="spec-val">Case B: Automatic Redaction</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Policy Strictness</span>
+          <span class="spec-val">Strict (Default SIH Policy)</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Egress Action</span>
+          <span class="spec-val">Send Masked Context [REDACTED_*]</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Agent Task Suggestion</span>
+          <span class="spec-val">"Verify that the discount was applied to my order total"</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-toggle-bar">
+      <div>
+        <strong style="color: #1e3a8a; font-size: 0.95rem;">LOOKUP Redaction Simulator</strong>
+        <p style="color: #3b82f6; font-size: 0.85rem;">Toggle to preview how LOOKUP redacts sensitive elements before remote egress.</p>
+      </div>
+      <button class="preview-toggle-btn" id="toggleRedactionBtn" onclick="toggleRedaction()">
+        Show Sanitized View
+      </button>
+    </div>
+
+    <div class="checkout-layout">
+      <!-- Left Column: Forms -->
+      <div>
+        <!-- Section: Customer Identification -->
+        <div class="section-card">
+          <h3 class="section-title">1. Customer Identification</h3>
+          <div class="form-grid">
+            <div class="form-group sensitive-field" data-mask-label="[REDACTED_NAME]">
+              <label for="fullName">Full Legal Name</label>
+              <input type="text" id="fullName" value="Alice M. Walker" readonly />
+            </div>
+
+            <div class="form-group sensitive-field" data-mask-label="[REDACTED_SSN]">
+              <label for="ssnInput">Social Security Number (SSN)</label>
+              <input type="text" id="ssnInput" value="123-45-6789" readonly />
+            </div>
+
+            <div class="form-group sensitive-field" data-mask-label="[REDACTED_EMAIL]">
+              <label for="emailInput">Email Address</label>
+              <input type="email" id="emailInput" value="alice@example.com" readonly />
+            </div>
+
+            <div class="form-group sensitive-field" data-mask-label="[REDACTED_PHONE]">
+              <label for="phoneInput">Primary Phone</label>
+              <input type="tel" id="phoneInput" value="555-0199" readonly />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Billing & Address -->
+        <div class="section-card">
+          <h3 class="section-title">2. Billing & Delivery Address</h3>
+          <div class="form-grid">
+            <div class="form-group full sensitive-field" data-mask-label="[REDACTED_ADDRESS]">
+              <label for="billingStreet">Street Address</label>
+              <input type="text" id="billingStreet" value="742 Evergreen Terrace" readonly />
+            </div>
+            <div class="form-group sensitive-field" data-mask-label="[REDACTED_CITY]">
+              <label for="billingCity">City & State</label>
+              <input type="text" id="billingCity" value="Springfield, OR" readonly />
+            </div>
+            <div class="form-group sensitive-field" data-mask-label="[REDACTED_ZIP]">
+              <label for="billingZip">Postal Code</label>
+              <input type="text" id="billingZip" value="97477" readonly />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Payment Details -->
+        <div class="section-card">
+          <h3 class="section-title">3. Payment Information</h3>
+          <div class="form-grid">
+            <div class="form-group full sensitive-field" data-mask-label="[REDACTED_CARD: 4111-XXXX-XXXX-1111]">
+              <label for="cardNumber">Credit Card Number</label>
+              <input type="text" id="cardNumber" value="4111-XXXX-XXXX-1111" readonly />
+            </div>
+            <div class="form-group sensitive-field" data-mask-label="[REDACTED_EXP]">
+              <label for="cardExp">Expiration Date</label>
+              <input type="text" id="cardExp" value="08/29" readonly />
+            </div>
+            <div class="form-group sensitive-field" data-mask-label="[REDACTED_CVV]">
+              <label for="cardCvv">Security Code (CVV)</label>
+              <input type="password" id="cardCvv" value="842" readonly />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Order Summary (Safe DOM Elements) -->
+      <div>
+        <div class="order-summary-card">
+          <h3 class="section-title">Order Summary</h3>
+          <p style="font-size: 0.8rem; color: #16a34a; font-weight: 600; margin-bottom: 14px;">
+            ✓ Safe Public Elements (Accessible to Agent)
+          </p>
+
+          <div class="item-row">
+            <div>
+              <div class="item-title">Designing Data-Intensive Applications</div>
+              <div class="item-qty">Qty: 1 · Hardcover</div>
+            </div>
+            <div style="font-weight: 600;">$44.99</div>
+          </div>
+
+          <div class="item-row">
+            <div>
+              <div class="item-title">Privacy Is Power</div>
+              <div class="item-qty">Qty: 1 · Paperback</div>
+            </div>
+            <div style="font-weight: 600;">$19.99</div>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="item-row">
+            <div style="color: var(--text-muted);">Subtotal</div>
+            <div>$64.98</div>
+          </div>
+          <div class="item-row">
+            <div style="color: var(--text-muted);">Promotion (PRIVACYFIRST)</div>
+            <div style="color: #16a34a; font-weight: 600;">-$10.00</div>
+          </div>
+          <div class="item-row">
+            <div style="color: var(--text-muted);">Estimated Tax</div>
+            <div>$4.40</div>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="total-row">
+            <div>Final Total</div>
+            <div>$59.38</div>
+          </div>
+
+          <button class="btn-pay" onclick="alert('Order successfully submitted in sandbox mode.')">
+            Complete Order ($59.38)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <a href="index.html" class="nav-link">← Return to LOOKUP Demo Index</a>
+  </div>
+
+  <script>
+    let isRedacted = false;
+    function toggleRedaction() {
+      isRedacted = !isRedacted;
+      const fields = document.querySelectorAll('.sensitive-field');
+      fields.forEach(el => {
+        if (isRedacted) {
+          el.classList.add('redacted');
+        } else {
+          el.classList.remove('redacted');
+        }
+      });
+      const btn = document.getElementById('toggleRedactionBtn');
+      btn.textContent = isRedacted ? 'Show Raw View' : 'Show Sanitized View';
+      btn.style.background = isRedacted ? '#b91c1c' : '#0284c7';
+    }
+  </script>
+</body>
+</html>

@@ -1,53 +1,63 @@
-# Privacy Policy for Nanobrowser
+# Privacy Policy for LOOKUP
 
 ## Introduction
 
-[Nanobrowser](https://github.com/nanobrowser/nanobrowser) is an open-source AI web automation Chrome extension. This Privacy Policy explains how we handle your data and protect your privacy.
+**LOOKUP** is an open-source, privacy-preserving AI web browser agent. This document explains the privacy architecture and guarantees enforced on your data.
 
-## Open Source
+## Core Architectural Principle: Privacy by Construction
 
-Nanobrowser is licensed under Apache License 2.0. All source code is publicly available in our [GitHub repository](https://github.com/nanobrowser/nanobrowser), ensuring complete transparency.
+Unlike conventional browser agents that send raw, unfiltered screenshots and DOM snapshots directly to remote AI clouds:
 
-## Data Collection and Processing
+> **Raw browser context must be processed locally first. Only task-relevant, sanitized context may cross the trust boundary to an external AI model.**
 
-### Local Processing
-- Nanobrowser operates entirely within your browser
-- Login credentials and cookies never leave your browser
-- All user data is processed locally by default
+LOOKUP operates a multi-layer local privacy enforcement plane before any external AI invocation:
 
-### Anonymous Analytics (Optional)
-**Analytics is enabled by default but can be disabled anytime** in extension settings.
+```text
+Browser Context (DOM, Screenshot, OCR)
+                 ↓
+       Task Context Analyzer
+                 ↓
+      Adaptive Local Perception
+                 ↓
+       Multi-Signal Detector
+  (DOM + Regex/Luhn + OCR + Vision)
+                 ↓
+          Evidence Fusion
+                 ↓
+       Privacy Policy Engine
+                 ↓
+      Redaction & Masking Engine
+                 ↓
+         User Consent Gate
+                 ↓
+      Fail-Closed Egress Gate
+                 ↓
+         Sanitized Context Only
+                 ↓
+         Remote AI Reasoning
+                 ↓
+        Local Action Validator
+                 ↓
+        Safe Browser Execution
+```
 
-**We collect only:**
-- Task metrics (execution times, error categories)
-- Domain names visited (e.g., "amazon.com" - not full URLs)
-- Anonymous usage statistics
-- Anonymous user identifier (randomly generated)
+## Open Source and Attribution
 
-**We never collect:**
-- Personal information, credentials, or authentication data
-- Full URLs, page content, screenshots, or task instructions
-- Any personally identifiable information
+LOOKUP is licensed under the Apache License 2.0. The project builds upon open-source browser automation foundations while introducing the local privacy plane, adaptive perception, and fail-closed egress architecture.
 
-Analytics data is processed by PostHog and used solely to improve the extension. Data is anonymized and never sold or shared with advertisers.
+## Local Processing & Privacy Guarantees
 
-### LLM Provider Interactions
-When using AI features, web page data (screenshots and HTML) is sent directly to your chosen LLM provider. This is necessary for AI functionality. Your data privacy is subject to your LLM provider's policies.
+1. **Zero Raw Screenshot Egress**: Raw screenshots are never attached to remote AI payloads. Only task-required visual regions that have been inspected and redacted/masked are permitted.
+2. **Deterministic Redaction**: Pattern detectors (with Luhn checksum validation for payment cards, SSN validation, API key patterns, emails, phone numbers, and addresses) redact sensitive text before serialization.
+3. **Fail-Closed Egress Gate**: If safety or policy cannot be verified, or if the user denies consent, transmission is strictly blocked.
+4. **Local Action Validation**: AI-generated actions are validated locally against protected regions, element existence, and dangerous protocols (`javascript:`, `file:`, etc.) before browser execution.
+5. **No Secret Telemetry**: Operational metrics record only sanitized counts and categories—never raw context, full DOM dumps, credentials, or screenshots.
 
-## API Keys
-- You provide your own API keys for LLM providers
-- Keys are stored locally in your browser only
-- You manage key security per provider terms
+## API Keys & User Control
 
-## User Control
-- Clear conversation history and settings anytime
-- **Enable/disable analytics** through extension options
-- Uninstall extension to remove all local data
+- API keys for LLM providers remain encrypted in your local browser storage.
+- You can configure the privacy mode (Strict, Balanced, Custom) in Extension Settings.
+- You can inspect real-time redaction and egress audit logs in the extension side panel.
 
-## Changes to This Privacy Policy
-We may update this policy periodically. Please review it regularly for changes.
-
-## Contact
-Questions or concerns? Contact us at cws@felight.xyz
-
-Last Updated: August 30, 2025
+---
+*LOOKUP — Privacy-First AI Browser Agent*

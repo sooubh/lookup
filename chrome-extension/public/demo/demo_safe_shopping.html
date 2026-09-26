@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOOKUP Demo 1 — Safe Public Shopping Catalog</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --border: #e2e8f0;
+      --badge-safe-bg: #ecfdf5;
+      --badge-safe-border: #a7f3d0;
+      --badge-safe-text: #065f46;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 0 0 60px;
+    }
+    .banner {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .banner h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .banner .shield-icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+    .privacy-tag {
+      background: var(--badge-safe-bg);
+      border: 1px solid var(--badge-safe-border);
+      color: var(--badge-safe-text);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 20px;
+    }
+    .spec-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .spec-card h2 {
+      font-size: 1.1rem;
+      color: #0369a1;
+      margin-bottom: 8px;
+    }
+    .spec-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
+    .spec-item {
+      font-size: 0.88rem;
+    }
+    .spec-label {
+      color: var(--text-muted);
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    .spec-val {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .store-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .store-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      max-width: 400px;
+      width: 100%;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .search-bar input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(2,132,199,0.15);
+    }
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .filter-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: #0284c7;
+      color: white;
+      border-color: #0284c7;
+    }
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 24px;
+    }
+    .book-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .book-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+    }
+    .book-category {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #0284c7;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .book-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #0f172a;
+    }
+    .book-author {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .book-desc {
+      font-size: 0.88rem;
+      color: #334155;
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #f1f5f9;
+    }
+    .rating {
+      color: #f59e0b;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .rating span {
+      color: var(--text-muted);
+      font-weight: 400;
+      font-size: 0.8rem;
+    }
+    .price {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-cart {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: #0284c7;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-cart:hover {
+      background: #0369a1;
+    }
+    .nav-link {
+      display: inline-block;
+      margin-top: 20px;
+      color: #0284c7;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .nav-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <h1>
+      <svg class="shield-icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+      LOOKUP Demo Suite · Scenario 1: Safe Public Shopping
+    </h1>
+    <div class="privacy-tag">
+      ✓ Expected Decision: SAFE (ALLOW)
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="spec-card">
+      <h2>Scenario Objective & Privacy Specification</h2>
+      <p>This is a completely public bookstore catalog. It contains no customer credentials, payment numbers, or personal identifying tokens.</p>
+      <div class="spec-grid">
+        <div class="spec-item">
+          <span class="spec-label">Expected Privacy Gateway Evaluation</span>
+          <span class="spec-val">Case A: Safe Context</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Sensitive Signals Detected</span>
+          <span class="spec-val">0 (Clean public DOM)</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Egress Action</span>
+          <span class="spec-val">Transmit Sanitized DOM</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-label">Agent Task Suggestion</span>
+          <span class="spec-val">"Find the highest-rated book under $40"</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="store-header">
+      <div>
+        <h2 class="store-title">The Reading Room Bookstore</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Curated technology, architecture, and privacy titles</p>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search books by title, author..." />
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active">All Books (6)</button>
+      <button class="filter-btn">Architecture</button>
+      <button class="filter-btn">Privacy & Security</button>
+      <button class="filter-btn">Software Craftsmanship</button>
+    </div>
+
+    <div class="catalog-grid" id="catalog">
+      <!-- Book 1 -->
+      <article class="book-card" data-category="Architecture">
+        <div>
+          <div class="book-category">Architecture</div>
+          <h3 class="book-title">Designing Data-Intensive Applications</h3>
+          <p class="book-author">by Martin Kleppmann</p>
+          <p class="book-desc">The definitive handbook for building reliable, scalable, and maintainable systems in modern cloud architectures.</p>
+        </div>
+        <div>
+          <div class="meta-row">
+            <div class="rating">★ 4.9 <span>(1,420 reviews)</span></div>
+            <div class="price">$44.99</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-cart" onclick="alert('Added Designing Data-Intensive Applications to cart')">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Book 2 -->
+      <article class="book-card" data-category="Privacy & Security">
+        <div>
+          <div class="book-category">Privacy & Security</div>
+          <h3 class="book-title">Zero Trust Architecture</h3>
+          <p class="book-author">by Jason Garbis & Jerry Chapman</p>
+          <p class="book-desc">Comprehensive strategy for modern perimeter-free security architectures and credential verification systems.</p>
+        </div>
+        <div>
+          <div class="meta-row">
+            <div class="rating">★ 4.8 <span>(830 reviews)</span></div>
+            <div class="price">$38.50</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-cart" onclick="alert('Added Zero Trust Architecture to cart')">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Book 3 -->
+      <article class="book-card" data-category="Privacy & Security">
+        <div>
+          <div class="book-category">Privacy & Security</div>
+          <h3 class="book-title">Privacy Is Power</h3>
+          <p class="book-author">by Carissa Véliz</p>
+          <p class="book-desc">Why and how you should take back control of your data, surveillance capitalism, and individual digital rights.</p>
+        </div>
+        <div>
+          <div class="meta-row">
+            <div class="rating">★ 4.7 <span>(512 reviews)</span></div>
+            <div class="price">$19.99</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-cart" onclick="alert('Added Privacy Is Power to cart')">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Book 4 -->
+      <article class="book-card" data-category="Software Craftsmanship">
+        <div>
+          <div class="book-category">Software Craftsmanship</div>
+          <h3 class="book-title">Clean Code</h3>
+          <p class="book-author">by Robert C. Martin</p>
+          <p class="book-desc">A handbook of agile software craftsmanship, emphasizing readable, clean, and maintainable programming patterns.</p>
+        </div>
+        <div>
+          <div class="meta-row">
+            <div class="rating">★ 4.6 <span>(3,210 reviews)</span></div>
+            <div class="price">$39.95</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-cart" onclick="alert('Added Clean Code to cart')">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Book 5 -->
+      <article class="book-card" data-category="Software Craftsmanship">
+        <div>
+          <div class="book-category">Software Craftsmanship</div>
+          <h3 class="book-title">The Pragmatic Programmer</h3>
+          <p class="book-author">by Andrew Hunt & David Thomas</p>
+          <p class="book-desc">Timeless engineering philosophy from career stewardship to modular software architecture and testing.</p>
+        </div>
+        <div>
+          <div class="meta-row">
+            <div class="rating">★ 4.9 <span>(2,150 reviews)</span></div>
+            <div class="price">$42.00</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-cart" onclick="alert('Added The Pragmatic Programmer to cart')">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Book 6 -->
+      <article class="book-card" data-category="Architecture">
+        <div>
+          <div class="book-category">Architecture</div>
+          <h3 class="book-title">Building Microservices</h3>
+          <p class="book-author">by Sam Newman</p>
+          <p class="book-desc">Detailed practical advice on modeling, integrating, testing, and deploying distributed service architectures.</p>
+        </div>
+        <div>
+          <div class="meta-row">
+            <div class="rating">★ 4.8 <span>(980 reviews)</span></div>
+            <div class="price">$46.50</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-cart" onclick="alert('Added Building Microservices to cart')">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <a href="index.html" class="nav-link">← Return to LOOKUP Demo Index</a>
+  </div>
+</body>
+</html>

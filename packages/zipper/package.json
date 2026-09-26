@@ -1,7 +1,7 @@
 {
   "name": "@extension/zipper",
   "version": "0.1.13",
-  "description": "chrome extension - zipper",
+  "description": "LOOKUP extension - zipper",
   "private": true,
   "sideEffects": false,
   "files": [

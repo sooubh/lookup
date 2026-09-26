@@ -1,7 +1,7 @@
 {
   "name": "@extension/vite-config",
   "version": "0.1.13",
-  "description": "chrome extension - vite base configuration",
+  "description": "LOOKUP extension - vite base configuration",
   "main": "index.mjs",
   "type": "module",
   "private": true,
@@ -12,6 +12,7 @@
   "devDependencies": {
     "@extension/hmr": "workspace:*",
     "@extension/tsconfig": "workspace:*",
+    "@vitejs/plugin-react": "^4.7.0",
     "@vitejs/plugin-react-swc": "^3.7.2",
     "deepmerge": "^4.3.1"
   }

@@ -2,10 +2,16 @@ import { HumanMessage, type SystemMessage } from '@langchain/core/messages';
 import type { AgentContext } from '@src/background/agent/types';
 import { wrapUntrustedContent } from '../messages/utils';
 import { createLogger } from '@src/background/log';
+import { PrivacyPipeline } from '../../privacy/core/PrivacyPipeline';
+import type { RawBrowserContext } from '../../privacy/core/PrivacyTypes';
+import { privacySettingsStore } from '@extension/storage';
+
+import { extractRawDomElementsFromBrowserState } from '../../privacy/context/DomExtractor';
 
 const logger = createLogger('BasePrompt');
+
 /**
- * Abstract base class for all prompt types
+ * Abstract base class for all prompt types in LOOKUP
  */
 abstract class BasePrompt {
   /**
@@ -22,19 +28,90 @@ abstract class BasePrompt {
   abstract getUserMessage(context: AgentContext): Promise<HumanMessage>;
 
   /**
-   * Builds the user message containing the browser state
+   * Builds the user message containing the sanitized browser state.
+   * Intercepts raw browser context and passes it through the LOOKUP Local Privacy Gateway
+   * before remote model transmission.
+   * 
    * @param context - The agent context
-   * @returns HumanMessage from LangChain
+   * @returns HumanMessage from LangChain with sanitized context
    */
   async buildBrowserStateUserMessage(context: AgentContext): Promise<HumanMessage> {
     const browserState = await context.browserContext.getState(context.options.useVision);
     const rawElementsText = browserState.elementTree.clickableElementsToString(context.options.includeAttributes);
 
+    // 1. Ensure PrivacyPipeline instance
+    if (!context.privacyPipeline) {
+      context.privacyPipeline = new PrivacyPipeline();
+    }
+
+    // 2. Load current privacy settings
+    let strictness: 'strict' | 'balanced' | 'custom' = 'strict';
+    try {
+      const storedSettings = await privacySettingsStore.getSettings();
+      if (storedSettings?.mode) {
+        strictness = storedSettings.mode;
+      }
+    } catch {
+      strictness = 'strict';
+    }
+
+    // Convert elementTree and selectorMap into structured RawDomElement[] for DOM detection
+    const rawDomElements = extractRawDomElementsFromBrowserState(
+      browserState.elementTree,
+      browserState.selectorMap,
+    );
+
+    // 3. Construct RawBrowserContext for local evaluation
+    const rawContext: RawBrowserContext = {
+      task: context.taskText || 'Browser automation task',
+      step: context.nSteps,
+      pageUrl: browserState.url,
+      pageTitle: browserState.title,
+      dom: rawDomElements,
+      screenshot: browserState.screenshot || undefined,
+      tabs: browserState.tabs.map(tab => ({
+        id: tab.id,
+        url: tab.url,
+        title: tab.title,
+        active: tab.id === browserState.tabId,
+      })),
+      metadata: {
+        rawElementsText,
+      },
+    };
+
+    // 4. Intercept and sanitize context through the privacy pipeline
+    logger.info(`[PrivacyGateway] Intercepting context for task: "${rawContext.task}" in ${strictness} mode`);
+    const sanitizedContext = await context.privacyPipeline.process(rawContext, {
+      strictness,
+    });
+    context.lastSanitizedContext = sanitizedContext;
+
+    // 5. Redact interactive elements text
+    const textRedactor = context.privacyPipeline.getRedactionEngine().getTextRedactor();
+    const redactedDom = textRedactor.redact(rawElementsText);
+    const sanitizedElementsText = redactedDom.redactedText;
+
+    if (redactedDom.redactions.length > 0) {
+      logger.info(`[PrivacyGateway] Protected ${redactedDom.redactions.length} sensitive item(s) in DOM context`);
+      try {
+        await privacySettingsStore.incrementCounter('redactedContexts');
+      } catch {
+        // Storage counter increment error ignored
+      }
+    }
+
+    try {
+      await privacySettingsStore.incrementCounter('inspectedContexts');
+      await privacySettingsStore.incrementCounter('sanitizedContexts');
+    } catch {
+      // Storage counter increment error ignored
+    }
+
     let formattedElementsText = '';
-    if (rawElementsText !== '') {
+    if (sanitizedElementsText !== '') {
       const scrollInfo = `[Scroll info of current page] window.scrollY: ${browserState.scrollY}, document.body.scrollHeight: ${browserState.scrollHeight}, window.visualViewport.height: ${browserState.visualViewportHeight}, visual viewport height as percentage of scrollable distance: ${Math.round((browserState.visualViewportHeight / (browserState.scrollHeight - browserState.visualViewportHeight)) * 100)}%\n`;
-      logger.info(scrollInfo);
-      const elementsText = wrapUntrustedContent(rawElementsText);
+      const elementsText = wrapUntrustedContent(sanitizedElementsText);
       formattedElementsText = `${scrollInfo}[Start of page]\n${elementsText}\n[End of page]\n`;
     } else {
       formattedElementsText = 'empty page';
@@ -53,12 +130,13 @@ abstract class BasePrompt {
       for (let i = 0; i < context.actionResults.length; i++) {
         const result = context.actionResults[i];
         if (result.extractedContent) {
-          actionResultsDescription += `\nAction result ${i + 1}/${context.actionResults.length}: ${result.extractedContent}`;
+          const redactedContent = textRedactor.redact(result.extractedContent).redactedText;
+          actionResultsDescription += `\nAction result ${i + 1}/${context.actionResults.length}: ${redactedContent}`;
         }
         if (result.error) {
-          // only use last line of error
-          const error = result.error.split('\n').pop();
-          actionResultsDescription += `\nAction error ${i + 1}/${context.actionResults.length}: ...${error}`;
+          const error = result.error.split('\n').pop() || '';
+          const redactedError = textRedactor.redact(error).redactedText;
+          actionResultsDescription += `\nAction error ${i + 1}/${context.actionResults.length}: ...${redactedError}`;
         }
       }
     }
@@ -67,9 +145,11 @@ abstract class BasePrompt {
     const otherTabs = browserState.tabs
       .filter(tab => tab.id !== browserState.tabId)
       .map(tab => `- {id: ${tab.id}, url: ${tab.url}, title: ${tab.title}}`);
+    
     const stateDescription = `
 [Task history memory ends]
 [Current state starts here]
+[LOOKUP Privacy Gate: Context evaluated & sanitized - Mode: ${strictness.toUpperCase()}]
 The following is one-time information - if you need to remember it write it to memory:
 Current tab: ${currentTab}
 Other available tabs:
@@ -80,13 +160,20 @@ ${stepInfoDescription}
 ${actionResultsDescription}
 `;
 
-    if (browserState.screenshot && context.options.useVision) {
+    // Only attach screenshot if vision is enabled, sanitizedContext approved, and sanitized image exists
+    const canSendScreenshot =
+      Boolean(browserState.screenshot) &&
+      Boolean(context.options.useVision) &&
+      sanitizedContext.privacy.status === 'approved' &&
+      sanitizedContext.image !== undefined;
+
+    if (canSendScreenshot && sanitizedContext.image?.dataUrl) {
       return new HumanMessage({
         content: [
           { type: 'text', text: stateDescription },
           {
             type: 'image_url',
-            image_url: { url: `data:image/jpeg;base64,${browserState.screenshot}` },
+            image_url: { url: sanitizedContext.image.dataUrl },
           },
         ],
       });

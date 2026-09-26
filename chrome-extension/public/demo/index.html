@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOOKUP — Privacy Test Suite & Demo Scenarios</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --border: #e2e8f0;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      padding: 48px 24px;
+      text-align: center;
+      border-bottom: 4px solid var(--primary);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      background: rgba(2, 132, 199, 0.2);
+      border: 1px solid rgba(2, 132, 199, 0.4);
+      color: #38bdf8;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    header h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    header p {
+      font-size: 1.15rem;
+      color: #94a3b8;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .container {
+      max-width: 1040px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .intro-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .intro-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .intro-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .scenarios-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+    .scenario-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 24px;
+      align-items: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    @media (max-width: 768px) {
+      .scenario-card {
+        grid-template-columns: 1fr;
+      }
+    }
+    .scenario-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08);
+    }
+    .scenario-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .pill-safe {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .pill-redact {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    .pill-ask {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .scenario-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .scenario-desc {
+      font-size: 0.95rem;
+      color: #475569;
+      margin-bottom: 16px;
+    }
+    .scenario-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .scenario-meta strong {
+      color: var(--text);
+    }
+    .btn-launch {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      padding: 14px 20px;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      border-radius: 10px;
+      transition: background 0.15s;
+    }
+    .btn-launch:hover {
+      background: var(--primary-dark);
+    }
+    .matrix-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 40px;
+    }
+    .matrix-card h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #0f172a;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: #475569;
+    }
+    td code {
+      font-family: monospace;
+      font-size: 0.82rem;
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .footer-note {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="badge">
+      🛡️ SIH Prototype Testbed
+    </div>
+    <h1>LOOKUP Privacy & Demo Scenarios</h1>
+    <p>
+      Deterministic test scenarios demonstrating local perception, automated sensitive data redaction, and user consent gates before cloud egress.
+    </p>
+  </header>
+
+  <div class="container">
+    <div class="intro-grid">
+      <div class="intro-card">
+        <h3>🔍 1. Local Perception</h3>
+        <p>Raw DOM and visual pixels are inspected on-device via local heuristic detectors and WebGPU perception.</p>
+      </div>
+      <div class="intro-card">
+        <h3>🛡️ 2. Policy Enforcement</h3>
+        <p>Configurable Strict and Balanced policies classify data into Safe, Redact, Ask User, or Block.</p>
+      </div>
+      <div class="intro-card">
+        <h3>🚪 3. Egress Trust Gate</h3>
+        <p>Zero unredacted sensitive tokens leave the machine. Outbound AI requests receive only sanitized DOM.</p>
+      </div>
+    </div>
+
+    <div class="scenarios-grid">
+      <!-- Scenario 1 -->
+      <div class="scenario-card">
+        <div>
+          <span class="scenario-pill pill-safe">Scenario 1 · Case A (Safe)</span>
+          <h2 class="scenario-title">Public Shopping Catalog</h2>
+          <p class="scenario-desc">
+            Public book store catalog containing titles, descriptions, prices, ratings, and customer reviews. Contains zero credentials, cookies, or personal information.
+          </p>
+          <div class="scenario-meta">
+            <div>Expected: <strong>SAFE (ALLOW)</strong></div>
+            <div>Sensitive Regions: <strong>0</strong></div>
+            <div>Payload: <strong>Sanitized Public DOM</strong></div>
+          </div>
+        </div>
+        <div>
+          <a href="demo_safe_shopping.html" class="btn-launch">Launch Demo 1 →</a>
+        </div>
+      </div>
+
+      <!-- Scenario 2 -->
+      <div class="scenario-card">
+        <div>
+          <span class="scenario-pill pill-redact">Scenario 2 · Case B (Automatic Redaction)</span>
+          <h2 class="scenario-title">E-Commerce Checkout with Account Data</h2>
+          <p class="scenario-desc">
+            Checkout page populated with sensitive customer data: Credit card number (4111-XXXX-XXXX-1111), Email (alice@example.com), Phone (555-0199), SSN (123-45-6789), and billing address.
+          </p>
+          <div class="scenario-meta">
+            <div>Expected: <strong>REDACT (AUTOMATIC)</strong></div>
+            <div>Detected: <strong>PAYMENT, CONTACT, FINANCIAL, PII</strong></div>
+            <div>Payload: <strong>Masked DOM [REDACTED_*]</strong></div>
+          </div>
+        </div>
+        <div>
+          <a href="demo_account_checkout.html" class="btn-launch">Launch Demo 2 →</a>
+        </div>
+      </div>
+
+      <!-- Scenario 3 -->
+      <div class="scenario-card">
+        <div>
+          <span class="scenario-pill pill-ask">Scenario 3 · Case C (User Consent Flow)</span>
+          <h2 class="scenario-title">Ambiguous Document / Mixed Clearance Badge</h2>
+          <p class="scenario-desc">
+            Research lab credential card displaying mixed public metadata (name, department, publication id) along with ambiguous internal security clearance tokens and biometric hashes.
+          </p>
+          <div class="scenario-meta">
+            <div>Expected: <strong>ASK_USER (Consent Modal)</strong></div>
+            <div>Default Choice: <strong>DENY (Fail Closed)</strong></div>
+            <div>Prompt: <strong>PrivacyConsentModal</strong></div>
+          </div>
+        </div>
+        <div>
+          <a href="demo_ambiguous_doc.html" class="btn-launch">Launch Demo 3 →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparative Table -->
+    <div class="matrix-card">
+      <h2>Privacy Evaluation Matrix</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Target URL</th>
+            <th>Data Characteristics</th>
+            <th>Policy Decision</th>
+            <th>Outbound AI Payload</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Safe Shopping</strong></td>
+            <td><code>demo_safe_shopping.html</code></td>
+            <td>Public catalog, prices, reviews</td>
+            <td><span class="scenario-pill pill-safe" style="margin:0;">ALLOW</span></td>
+            <td>Sanitized DOM elements</td>
+          </tr>
+          <tr>
+            <td><strong>2. Account Checkout</strong></td>
+            <td><code>demo_account_checkout.html</code></td>
+            <td>Credit Card, SSN, Phone, Email, Address</td>
+            <td><span class="scenario-pill pill-redact" style="margin:0;">REDACT</span></td>
+            <td>Masked DOM with <code>[REDACTED_*]</code> tokens</td>
+          </tr>
+          <tr>
+            <td><strong>3. Ambiguous Doc</strong></td>
+            <td><code>demo_ambiguous_doc.html</code></td>
+            <td>Mixed public fields & ambiguous tokens</td>
+            <td><span class="scenario-pill pill-ask" style="margin:0;">ASK_USER</span></td>
+            <td>Halted until user clicks "Allow Once"</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer-note">
+      <p>LOOKUP Test Suite · Privacy-First Browser Agent Architecture</p>
+    </div>
+  </div>
+</body>
+</html>

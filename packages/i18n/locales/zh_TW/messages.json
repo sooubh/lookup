@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Extension description",
-    "message": "使用 AI 自動化網頁任務！Nanobrowser 是一款開放原始碼的瀏覽器擴充功能，能協助您擷取資料、填寫表單等。"
+    "message": "LOOKUP 是一款開源且保護隱私的 AI 瀏覽器代理程式，在雲端推理之前於本地執行感知與清理。"
   },
   "app_metadata_name": {
     "description": "Extension name",
-    "message": "Nanobrowser：AI 網頁代理程式與自動化"
+    "message": "LOOKUP：隱私優先 AI 瀏覽器代理程式"
   },
   "errors_unknown": {
     "message": "發生未知錯誤"
@@ -38,7 +38,7 @@
     "message": "回到對話"
   },
   "welcome_title": {
-    "message": "歡迎使用 Nanobrowser！"
+    "message": "歡迎使用 LOOKUP！"
   },
   "welcome_instruction": {
     "message": "開始使用前，請先完成 API 金鑰的設定。"
@@ -167,7 +167,7 @@
     "message": "啟用語音輸入"
   },
   "permissions_microphone_description": {
-    "message": "Nanobrowser 需要麥克風存取權限，才能將語音轉換為文字。"
+    "message": "LOOKUP 需要麥克風存取權限，才能將語音轉換為文字。"
   },
   "permissions_microphone_grantButton": {
     "message": "授予麥克風權限"
@@ -207,6 +207,9 @@
   },
   "options_tabs_firewall": {
     "message": "防火牆"
+  },
+  "options_tabs_privacy": {
+    "message": "隱私保護"
   },
   "options_tabs_help": {
     "message": "說明"
@@ -959,5 +962,63 @@
         "example": "Option not found"
       }
     }
+  },
+  "privacy_status_title": {
+    "message": "隱私狀態"
+  },
+  "privacy_status_safe": {
+    "message": "本地保護 · 已發送安全上下文"
+  },
+  "privacy_status_redacted": {
+    "message": "已在本地遮蔽敏感資訊"
+  },
+  "privacy_status_blocked": {
+    "message": "已被隱私政策封鎖"
+  },
+  "privacy_status_ask": {
+    "message": "需要使用者確認"
+  },
+  "privacy_consent_title": {
+    "message": "需要隱私確認"
+  },
+  "privacy_consent_desc": {
+    "message": "我們發現了可能屬於敏感資訊的內容。未經您的許可，任何資料均不會發送。"
+  },
+  "privacy_consent_allow": {
+    "message": "允許一次"
+  },
+  "privacy_consent_deny": {
+    "message": "拒絕"
+  },
+  "privacy_settings_title": {
+    "message": "隱私設定"
+  },
+  "privacy_settings_mode": {
+    "message": "隱私模式"
+  },
+  "privacy_settings_strict": {
+    "message": "嚴格（推薦）"
+  },
+  "privacy_settings_balanced": {
+    "message": "平衡"
+  },
+  "privacy_settings_custom": {
+    "message": "自訂"
+  },
+  "privacy_settings_local_vision": {
+    "message": "本地視覺模型"
+  },
+  "privacy_settings_ocr": {
+    "message": "本地 OCR 感知"
+  },
+  "privacy_stats_inspected": {
+    "message": "已檢查上下文"
+  },
+  "privacy_stats_redacted": {
+    "message": "已遮蔽敏感項目"
+  },
+  "privacy_stats_blocked": {
+    "message": "已封鎖傳輸"
   }
 }
+

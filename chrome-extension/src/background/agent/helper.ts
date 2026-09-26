@@ -21,7 +21,7 @@ class ChatLlama extends ChatOpenAI {
   async completionWithRetry(request: any, options?: any): Promise<any> {
     try {
       // Make the request using the parent's implementation
-      const response = await super.completionWithRetry(request, options);
+      const response = await (ChatOpenAI.prototype as any).completionWithRetry.call(this, request, options);
 
       // Check if this is a Llama API response format
       if (response?.completion_message?.content?.text) {

@@ -24,6 +24,7 @@ const logger = createLogger('background');
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
 let currentPort: chrome.runtime.Port | null = null;
+const pendingConsentResolvers = new Map<string, (decision: 'allow_once' | 'deny') => void>();
 const SIDE_PANEL_URL = chrome.runtime.getURL('side-panel/index.html');
 
 // Setup side panel behavior
@@ -66,11 +67,19 @@ analyticsSettingsStore.subscribe(() => {
   });
 });
 
-// Listen for simple messages (e.g., from options page)
-chrome.runtime.onMessage.addListener(() => {
-  // Handle other message types if needed in the future
-  // Return false if response is not sent asynchronously
-  // return false;
+// Listen for simple messages (e.g., from options page or side panel)
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === 'privacy_consent_response') {
+    const reqId = message.requestId || message.id;
+    const resolver = pendingConsentResolvers.get(reqId);
+    if (resolver) {
+      pendingConsentResolvers.delete(reqId);
+      resolver(message.decision === 'allow_once' ? 'allow_once' : 'deny');
+      sendResponse({ success: true });
+      return true;
+    }
+  }
+  return false;
 });
 
 // Setup connection listener for long-lived connections (e.g., side panel)
@@ -244,6 +253,17 @@ chrome.runtime.onConnect.addListener(port => {
             break;
           }
 
+          case 'privacy_consent_response': {
+            const reqId = message.requestId || message.id;
+            const resolver = pendingConsentResolvers.get(reqId);
+            if (resolver) {
+              pendingConsentResolvers.delete(reqId);
+              resolver(message.decision === 'allow_once' ? 'allow_once' : 'deny');
+              return port.postMessage({ type: 'success' });
+            }
+            break;
+          }
+
           default:
             return port.postMessage({ type: 'error', error: t('errors_cmd_unknown', [message.type]) });
         }
@@ -260,6 +280,11 @@ chrome.runtime.onConnect.addListener(port => {
       // this event is also triggered when the side panel is closed, so we need to cancel the task
       console.log('Side panel disconnected');
       currentPort = null;
+      // Fail-closed: deny any pending consent prompts
+      for (const resolver of pendingConsentResolvers.values()) {
+        resolver('deny');
+      }
+      pendingConsentResolvers.clear();
       currentExecutor?.cancel();
     });
   }
@@ -331,6 +356,43 @@ async function setupExecutor(taskId: string, task: string, browserContext: Brows
     },
     generalSettings: generalSettings,
   });
+
+  const pipeline = executor.getContext().privacyPipeline;
+  if (pipeline) {
+    pipeline.getConsentManager().setPromptHandler(async (req: any) => {
+      return new Promise<'allow_once' | 'deny'>(resolve => {
+        pendingConsentResolvers.set(req.id, resolve);
+        const payload = {
+          type: 'privacy_consent_request',
+          id: req.id,
+          requestId: req.id,
+          task: req.task,
+          domain: req.domain,
+          categories: req.detectedCategories,
+          explanation: req.explanation,
+          severity: 'high',
+          timestamp: req.timestamp,
+        };
+        if (currentPort) {
+          try {
+            currentPort.postMessage(payload);
+          } catch {
+            // Port message error ignored
+          }
+        }
+        chrome.runtime.sendMessage(payload).catch(() => {});
+
+        // Fail-closed timeout after 45s: default deny
+        setTimeout(() => {
+          if (pendingConsentResolvers.has(req.id)) {
+            pendingConsentResolvers.delete(req.id);
+            logger.warning(`Consent request ${req.id} timed out; failing closed to deny.`);
+            resolve('deny');
+          }
+        }, 45000);
+      });
+    });
+  }
 
   return executor;
 }

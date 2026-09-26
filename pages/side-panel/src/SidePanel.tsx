@@ -4,13 +4,25 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
-import { type Message, Actors, chatHistoryStore, agentModelStore, generalSettingsStore } from '@extension/storage';
+import {
+  type Message,
+  Actors,
+  chatHistoryStore,
+  agentModelStore,
+  generalSettingsStore,
+  privacySettingsStore,
+  type PrivacySettingsConfig,
+  DEFAULT_PRIVACY_SETTINGS,
+} from '@extension/storage';
 import favoritesStorage, { type FavoritePrompt } from '@extension/storage/lib/prompt/favorites';
 import { t } from '@extension/i18n';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import BookmarkList from './components/BookmarkList';
+import PrivacyStatusBadge from './components/PrivacyStatusBadge';
+import PrivacyConsentModal, { type PrivacyConsentRequest } from './components/PrivacyConsentModal';
+import PrivacyReportModal from './components/PrivacyReportModal';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import './SidePanel.css';
 
@@ -38,6 +50,9 @@ const SidePanel = () => {
   const [isProcessingSpeech, setIsProcessingSpeech] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
   const [replayEnabled, setReplayEnabled] = useState(false);
+  const [privacyConfig, setPrivacyConfig] = useState<PrivacySettingsConfig>(DEFAULT_PRIVACY_SETTINGS);
+  const [showPrivacyReport, setShowPrivacyReport] = useState(false);
+  const [consentRequest, setConsentRequest] = useState<PrivacyConsentRequest | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const isReplayingRef = useRef<boolean>(false);
   const portRef = useRef<chrome.runtime.Port | null>(null);
@@ -125,6 +140,17 @@ const SidePanel = () => {
     isReplayingRef.current = isReplaying;
   }, [isReplaying]);
 
+  // Load privacy settings and subscribe to updates
+  useEffect(() => {
+    privacySettingsStore.getSettings().then(setPrivacyConfig);
+    const unsubscribe = privacySettingsStore.subscribe(() => {
+      privacySettingsStore.getSettings().then(setPrivacyConfig);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   const appendMessage = useCallback((newMessage: Message, sessionId?: string | null) => {
     // Don't save progress messages
     const isProgressMessage = newMessage.content === progressMessage;
@@ -146,6 +172,74 @@ const SidePanel = () => {
         .catch(err => console.error('Failed to save message to history:', err));
     }
   }, []);
+
+  const handleConsentDeny = useCallback(
+    (requestId: string) => {
+      try {
+        if (portRef.current?.name === 'side-panel-connection') {
+          portRef.current.postMessage({
+            type: 'privacy_consent_response',
+            requestId,
+            decision: 'deny',
+          });
+        }
+        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+          chrome.runtime
+            .sendMessage({
+              type: 'privacy_consent_response',
+              requestId,
+              decision: 'deny',
+            })
+            .catch(() => {});
+        }
+      } catch (error) {
+        console.error('Failed to send consent deny response:', error);
+      }
+
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: '🛡️ Task halted: Privacy confirmation denied. No protected data was sent.',
+        timestamp: Date.now(),
+      });
+      setConsentRequest(null);
+      setInputEnabled(true);
+      setShowStopButton(false);
+    },
+    [appendMessage],
+  );
+
+  const handleConsentAllowOnce = useCallback(
+    (requestId: string) => {
+      try {
+        if (portRef.current?.name === 'side-panel-connection') {
+          portRef.current.postMessage({
+            type: 'privacy_consent_response',
+            requestId,
+            decision: 'allow_once',
+          });
+        }
+        if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+          chrome.runtime
+            .sendMessage({
+              type: 'privacy_consent_response',
+              requestId,
+              decision: 'allow_once',
+            })
+            .catch(() => {});
+        }
+      } catch (error) {
+        console.error('Failed to send consent allow response:', error);
+      }
+
+      appendMessage({
+        actor: Actors.SYSTEM,
+        content: '🛡️ Consent granted: Sending single sanitized context to remote agent.',
+        timestamp: Date.now(),
+      });
+      setConsentRequest(null);
+    },
+    [appendMessage],
+  );
 
   const handleTaskState = useCallback(
     (event: AgentEvent) => {
@@ -335,6 +429,27 @@ const SidePanel = () => {
           setIsProcessingSpeech(false);
         } else if (message && message.type === 'heartbeat_ack') {
           console.log('Heartbeat acknowledged');
+        } else if (
+          message &&
+          (message.type === 'privacy_consent_request' || message.type === 'PRIVACY_CONSENT_REQUEST')
+        ) {
+          setConsentRequest({
+            id: message.id || message.requestId || `consent_${Date.now()}`,
+            task: message.task,
+            domain: message.domain,
+            categories: message.categories || message.detectedCategories || ['AMBIGUOUS_PAGE_DATA'],
+            severity: message.severity || 'high',
+            explanation: message.explanation || message.details,
+            contextWillSend: message.contextWillSend,
+            redactedFields: message.redactedFields,
+            timestamp: message.timestamp || Date.now(),
+          });
+        } else if (message && message.type === 'privacy_notice') {
+          appendMessage({
+            actor: Actors.SYSTEM,
+            content: message.content || '🛡️ Protected locally before sharing.',
+            timestamp: Date.now(),
+          });
         }
       });
 
@@ -396,6 +511,36 @@ const SidePanel = () => {
     },
     [stopConnection],
   );
+
+  // Listen for broadcast privacy consent requests via runtime messages
+  useEffect(() => {
+    const handleRuntimeMessage = (message: any, _sender: any, sendResponse: any) => {
+      if (
+        message &&
+        (message.type === 'privacy_consent_request' || message.type === 'PRIVACY_CONSENT_REQUEST')
+      ) {
+        setConsentRequest({
+          id: message.id || message.requestId || `consent_${Date.now()}`,
+          task: message.task,
+          domain: message.domain,
+          categories: message.categories || message.detectedCategories || ['AMBIGUOUS_PAGE_DATA'],
+          severity: message.severity || 'high',
+          explanation: message.explanation || message.details,
+          contextWillSend: message.contextWillSend,
+          redactedFields: message.redactedFields,
+          timestamp: message.timestamp || Date.now(),
+        });
+        sendResponse?.({ acknowledged: true });
+      }
+    };
+    if (typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+      chrome.runtime.onMessage.addListener(handleRuntimeMessage);
+      return () => {
+        chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
+      };
+    }
+    return undefined;
+  }, []);
 
   // Handle replay command
   const handleReplay = async (historySessionId: string): Promise<void> => {
@@ -1014,7 +1159,14 @@ const SidePanel = () => {
                 {t('nav_back')}
               </button>
             ) : (
-              <img src="/icon-128.png" alt="Extension Logo" className="size-6" />
+              <>
+                <img src="/icon-128.png" alt="Extension Logo" className="size-6 shrink-0" />
+                <PrivacyStatusBadge
+                  mode={privacyConfig.mode}
+                  isDarkMode={isDarkMode}
+                  onClick={() => setShowPrivacyReport(true)}
+                />
+              </>
             )}
           </div>
           <div className="header-icons">
@@ -1187,6 +1339,21 @@ const SidePanel = () => {
           </>
         )}
       </div>
+
+      {/* Privacy UI Modals */}
+      <PrivacyConsentModal
+        isOpen={consentRequest !== null}
+        request={consentRequest}
+        onDeny={handleConsentDeny}
+        onAllowOnce={handleConsentAllowOnce}
+        isDarkMode={isDarkMode}
+      />
+      <PrivacyReportModal
+        isOpen={showPrivacyReport}
+        onClose={() => setShowPrivacyReport(false)}
+        config={privacyConfig}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 };

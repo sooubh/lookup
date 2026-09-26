@@ -1,17 +1,10 @@
 import { defineConfig } from 'vite';
 import { watchRebuildPlugin } from '@extension/hmr';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import deepmerge from 'deepmerge';
-import { isDev, isProduction } from './env.mjs';
+import { isDev, isProduction, watchOption } from './env.mjs';
 
-export const watchOption = isDev ? {
-  buildDelay: 100,
-  chokidar: {
-    ignored:[
-      /\/packages\/.*\.(ts|tsx|map)$/,
-    ]
-  }
-}: undefined;
+export { watchOption };
 
 /**
  * @typedef {import('vite').UserConfig} UserConfig

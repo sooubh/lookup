@@ -1,7 +1,7 @@
 {
   "name": "@extension/storage",
   "version": "0.1.13",
-  "description": "chrome extension - storage",
+  "description": "LOOKUP extension - storage",
   "private": true,
   "sideEffects": false,
   "files": [

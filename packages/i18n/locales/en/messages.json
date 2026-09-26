@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Extension description",
-    "message": "Automate web tasks with AI! NanoBrowser is an open-source browser extension that lets you extract data, fill forms, and more."
+    "message": "LOOKUP is an open-source, privacy-preserving AI browser agent that runs local perception and sanitization before cloud reasoning."
   },
   "app_metadata_name": {
     "description": "Extension name",
-    "message": "Nanobrowser: AI Web Agent & Automation"
+    "message": "LOOKUP: Privacy-First AI Browser Agent"
   },
   "errors_unknown": {
     "message": "Unknown error occurred"
@@ -38,7 +38,7 @@
     "message": "Back to chat"
   },
   "welcome_title": {
-    "message": "Welcome to Nanobrowser!"
+    "message": "Welcome to LOOKUP!"
   },
   "welcome_instruction": {
     "message": "To get started, please configure your API keys in the settings page."
@@ -167,7 +167,7 @@
     "message": "Enable Voice Input"
   },
   "permissions_microphone_description": {
-    "message": "Nanobrowser needs microphone access to convert your speech to text."
+    "message": "LOOKUP needs microphone access to convert your speech to text."
   },
   "permissions_microphone_grantButton": {
     "message": "Grant Microphone Permission"
@@ -207,6 +207,9 @@
   },
   "options_tabs_firewall": {
     "message": "Firewall"
+  },
+  "options_tabs_privacy": {
+    "message": "Privacy"
   },
   "options_tabs_help": {
     "message": "Help"
@@ -967,5 +970,63 @@
         "example": "Option not found"
       }
     }
+  },
+  "privacy_status_title": {
+    "message": "Privacy Status"
+  },
+  "privacy_status_safe": {
+    "message": "Protected locally · Safe context sent"
+  },
+  "privacy_status_redacted": {
+    "message": "Sensitive data redacted locally"
+  },
+  "privacy_status_blocked": {
+    "message": "Blocked by privacy policy"
+  },
+  "privacy_status_ask": {
+    "message": "User confirmation required"
+  },
+  "privacy_consent_title": {
+    "message": "Privacy Confirmation Required"
+  },
+  "privacy_consent_desc": {
+    "message": "We found information that may be sensitive. Nothing will be sent without your approval."
+  },
+  "privacy_consent_allow": {
+    "message": "Allow Once"
+  },
+  "privacy_consent_deny": {
+    "message": "Deny"
+  },
+  "privacy_settings_title": {
+    "message": "Privacy Settings"
+  },
+  "privacy_settings_mode": {
+    "message": "Privacy Mode"
+  },
+  "privacy_settings_strict": {
+    "message": "Strict (Recommended)"
+  },
+  "privacy_settings_balanced": {
+    "message": "Balanced"
+  },
+  "privacy_settings_custom": {
+    "message": "Custom"
+  },
+  "privacy_settings_local_vision": {
+    "message": "Local Vision Model"
+  },
+  "privacy_settings_ocr": {
+    "message": "Local OCR Perception"
+  },
+  "privacy_stats_inspected": {
+    "message": "Contexts Inspected"
+  },
+  "privacy_stats_redacted": {
+    "message": "Sensitive Items Redacted"
+  },
+  "privacy_stats_blocked": {
+    "message": "Transmissions Blocked"
   }
 }
+

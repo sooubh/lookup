@@ -25,6 +25,7 @@ import { chatHistoryStore } from '@extension/storage/lib/chat';
 import type { AgentStepHistory } from './history';
 import type { GeneralSettingsConfig } from '@extension/storage';
 import { analytics } from '../services/analytics';
+import { PrivacyPipeline, PrivacyBlockedError, PrivacyConsentDeniedError, PrivacyEgressError } from '../privacy';
 
 const logger = createLogger('Executor');
 
@@ -65,6 +66,8 @@ export class Executor {
 
     this.generalSettings = extraArgs?.generalSettings;
     this.tasks.push(task);
+    context.taskText = task;
+    context.privacyPipeline = new PrivacyPipeline();
     this.navigatorPrompt = new NavigatorPrompt(context.options.maxActionsPerStep);
     this.plannerPrompt = new PlannerPrompt();
 
@@ -96,6 +99,10 @@ export class Executor {
   clearExecutionEvents(): void {
     // Clear all execution event listeners
     this.context.eventManager.clearSubscribers(EventType.EXECUTION);
+  }
+
+  getContext(): AgentContext {
+    return this.context;
   }
 
   addFollowUpTask(task: string): void {
@@ -258,7 +265,10 @@ export class Executor {
         error instanceof ChatModelForbiddenError ||
         error instanceof URLNotAllowedError ||
         error instanceof RequestCancelledError ||
-        error instanceof ExtensionConflictError
+        error instanceof ExtensionConflictError ||
+        error instanceof PrivacyBlockedError ||
+        error instanceof PrivacyConsentDeniedError ||
+        error instanceof PrivacyEgressError
       ) {
         throw error;
       }
@@ -300,7 +310,10 @@ export class Executor {
         error instanceof ChatModelForbiddenError ||
         error instanceof URLNotAllowedError ||
         error instanceof RequestCancelledError ||
-        error instanceof ExtensionConflictError
+        error instanceof ExtensionConflictError ||
+        error instanceof PrivacyBlockedError ||
+        error instanceof PrivacyConsentDeniedError ||
+        error instanceof PrivacyEgressError
       ) {
         throw error;
       }

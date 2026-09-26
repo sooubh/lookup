@@ -1,7 +1,7 @@
 {
   "name": "@extension/content-script",
   "version": "0.1.13",
-  "description": "chrome extension - content script",
+  "description": "LOOKUP extension - content script",
   "private": true,
   "sideEffects": true,
   "files": [

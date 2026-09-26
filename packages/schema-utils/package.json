@@ -1,7 +1,7 @@
 {
   "name": "@extension/schema-utils",
   "version": "0.1.13",
-  "description": "JSON schema and related helpers for tools",
+  "description": "LOOKUP - JSON schema and related helpers for tools",
   "private": true,
   "type": "module",
   "sideEffects": false,

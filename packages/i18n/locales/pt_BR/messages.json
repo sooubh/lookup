@@ -1,11 +1,11 @@
 {
   "app_metadata_description": {
     "description": "Descrição da extensão",
-    "message": "Automatize tarefas da web com IA! NanoBrowser é uma extensão de código aberto para o navegador que permite extrair dados, preencher formulários e muito mais."
+    "message": "LOOKUP é um agente de navegação com IA de código aberto que preserva a privacidade executando percepção e sanitização locais antes do raciocínio na nuvem."
   },
   "app_metadata_name": {
     "description": "Nome da extensão",
-    "message": "Nanobrowser: Agente Web de IA e Automação"
+    "message": "LOOKUP: Agente de Navegação com IA e Privacidade"
   },
   "errors_unknown": {
     "message": "Ocorreu um erro desconhecido"
@@ -38,7 +38,7 @@
     "message": "Voltar para o chat"
   },
   "welcome_title": {
-    "message": "Bem-vindo ao Nanobrowser!"
+    "message": "Bem-vindo ao LOOKUP!"
   },
   "welcome_instruction": {
     "message": "Para começar, por favor, configure suas chaves de API na página de configurações."
@@ -167,7 +167,7 @@
     "message": "Ativar Entrada de Voz"
   },
   "permissions_microphone_description": {
-    "message": "O Nanobrowser precisa de acesso ao microfone para converter sua fala em texto."
+    "message": "O LOOKUP precisa de acesso ao microfone para converter sua fala em texto."
   },
   "permissions_microphone_grantButton": {
     "message": "Conceder Permissão ao Microfone"
@@ -207,6 +207,9 @@
   },
   "options_tabs_firewall": {
     "message": "Firewall"
+  },
+  "options_tabs_privacy": {
+    "message": "Privacidade"
   },
   "options_tabs_help": {
     "message": "Ajuda"
@@ -966,5 +969,63 @@
         "example": "Opção não encontrada"
       }
     }
+  },
+  "privacy_status_title": {
+    "message": "Status de Privacidade"
+  },
+  "privacy_status_safe": {
+    "message": "Protegido localmente · Contexto seguro enviado"
+  },
+  "privacy_status_redacted": {
+    "message": "Dados confidenciais redigidos localmente"
+  },
+  "privacy_status_blocked": {
+    "message": "Bloqueado pela política de privacidade"
+  },
+  "privacy_status_ask": {
+    "message": "Confirmação do usuário necessária"
+  },
+  "privacy_consent_title": {
+    "message": "Confirmação de Privacidade Necessária"
+  },
+  "privacy_consent_desc": {
+    "message": "Encontramos informações que podem ser confidenciais. Nada será enviado sem sua aprovação."
+  },
+  "privacy_consent_allow": {
+    "message": "Permitir uma vez"
+  },
+  "privacy_consent_deny": {
+    "message": "Negar"
+  },
+  "privacy_settings_title": {
+    "message": "Configurações de Privacidade"
+  },
+  "privacy_settings_mode": {
+    "message": "Modo de Privacidade"
+  },
+  "privacy_settings_strict": {
+    "message": "Estrito (Recomendado)"
+  },
+  "privacy_settings_balanced": {
+    "message": "Equilibrado"
+  },
+  "privacy_settings_custom": {
+    "message": "Personalizado"
+  },
+  "privacy_settings_local_vision": {
+    "message": "Modelo de Visão Local"
+  },
+  "privacy_settings_ocr": {
+    "message": "Percepção OCR Local"
+  },
+  "privacy_stats_inspected": {
+    "message": "Contextos Inspecionados"
+  },
+  "privacy_stats_redacted": {
+    "message": "Itens Confidenciais Redigidos"
+  },
+  "privacy_stats_blocked": {
+    "message": "Transmissões Bloqueadas"
   }
 }
+

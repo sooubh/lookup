@@ -8,6 +8,7 @@ import type { Action } from '../actions/builder';
 import { convertInputMessages, extractJsonFromModelOutput, removeThinkTags } from '../messages/utils';
 import { isAbortedError, ResponseParseError } from './errors';
 import { ProviderTypeEnum } from '@extension/storage';
+import { PrivacyEgressGate } from '../../privacy/core/PrivacyEgressGate';
 
 const logger = createLogger('agent');
 
@@ -119,6 +120,11 @@ export abstract class BaseAgent<T extends z.ZodType, M = unknown> {
   }
 
   async invoke(inputMessages: BaseMessage[]): Promise<this['ModelOutput']> {
+    // FAIL-CLOSED PRIVACY EGRESS CHECK:
+    // Verify outbound messages against privacy gate before sending to remote model
+    const egressGate = this.context.privacyPipeline?.getEgressGate() || new PrivacyEgressGate();
+    egressGate.validateOutboundMessages(inputMessages, this.context.lastSanitizedContext);
+
     // Use structured output
     if (this.withStructuredOutput) {
       logger.debug(`[${this.modelName}] Preparing structured output call with schema:`, {
