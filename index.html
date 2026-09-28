@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="LOOKUP — Privacy-Preserving Browser AI. A technical project proposal for Smart India Hackathon 2026: on-device visual perception and privacy enforcement for lightweight browser agents." />
+  <meta name="theme-color" content="#ffffff" />
+  <title>LOOKUP — Technical Architecture & Project Specification</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --surface:#fbfcfd;
+      --surface-2:#f5f7f9;
+      --ink:#111827;
+      --muted:#536071;
+      --line:#d9dee6;
+      --line-strong:#b9c1cd;
+      --blue:#1769aa;
+      --blue-soft:#edf6ff;
+      --green:#138a52;
+      --green-soft:#edf9f3;
+      --red:#b42318;
+      --red-soft:#fff2f0;
+      --purple:#6b42c1;
+      --purple-soft:#f5f0ff;
+      --shadow:0 12px 30px rgba(17,24,39,.06);
+      --radius:6px;
+      --sidebar:290px;
+      --header:72px;
+      --max:1060px;
+      --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+      --serif:Georgia,"Times New Roman",serif;
+      --sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:92px}
+    body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.65}
+    a{color:inherit}
+    button,input{font:inherit}
+    .topbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);height:var(--header);display:flex;align-items:center;justify-content:space-between;padding:0 28px 0 22px}
+    .brand{display:flex;align-items:center;gap:12px;min-width:240px;text-decoration:none}
+    .brand-mark{width:34px;height:34px;border:1px solid var(--ink);display:grid;place-items:center;border-radius:5px;background:#fff}
+    .brand-mark svg{width:22px;height:22px}
+    .brand-text strong{display:block;font-size:15px;letter-spacing:.08em}
+    .brand-text span{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.13em}
+    .header-actions{display:flex;align-items:center;gap:10px}
+    .header-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-strong);background:#fff;padding:8px 12px;text-decoration:none;font-size:12px;font-weight:650;border-radius:4px}
+    .header-btn:hover{background:var(--surface-2)}
+    .menu-toggle{display:none;border:1px solid var(--line-strong);background:#fff;border-radius:4px;padding:8px 10px;cursor:pointer}
+    .layout{display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr);min-height:calc(100vh - var(--header))}
+    .sidebar{position:sticky;top:var(--header);height:calc(100vh - var(--header));overflow:auto;border-right:1px solid var(--line);padding:22px 18px 28px;background:#fff}
+    .sidebar-title{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:0 0 12px;color:#263040}
+    .sidebar-sub{font-size:11px;color:var(--muted);margin:0 0 18px}
+    .search{position:relative;margin-bottom:18px}
+    .search input{width:100%;border:1px solid var(--line-strong);background:var(--surface);padding:9px 10px 9px 31px;border-radius:4px;outline:none;font-size:12px}
+    .search svg{position:absolute;left:10px;top:10px;width:15px;height:15px;color:var(--muted)}
+    .nav-group{margin-bottom:16px}
+    .nav-link{display:flex;gap:8px;align-items:baseline;padding:7px 9px;border-left:2px solid transparent;text-decoration:none;font-size:12px;color:#344054;border-radius:0 4px 4px 0}
+    .nav-link .num{font-family:var(--mono);font-size:10px;color:#8a95a4;min-width:22px}
+    .nav-link:hover{background:var(--surface);color:var(--ink)}
+    .nav-link.active{background:#f5f8fb;border-left-color:var(--blue);color:#0f4f82;font-weight:700}
+    .nav-link.sub{padding-left:31px;font-size:11px}
+    main{min-width:0}
+    .content-wrap{max-width:var(--max);padding:48px 60px 100px;margin:0 auto}
+    .eyebrow{font-size:11px;color:var(--blue);letter-spacing:.12em;text-transform:uppercase;font-weight:800}
+    h1,h2,h3{margin:0;color:#0b1220}
+    h1{font-family:var(--serif);font-weight:500;font-size:46px;line-height:1.12;letter-spacing:-.02em;margin-top:9px}
+    h2{font-family:var(--serif);font-size:30px;font-weight:500;line-height:1.2;margin:56px 0 16px;padding-top:18px;border-top:1px solid var(--line)}
+    h3{font-size:17px;margin:28px 0 8px}
+    p{font-size:15px;color:#263040;margin:12px 0}
+    .lead{font-size:18px;line-height:1.72;max-width:920px;color:#2f3b4a}
+    .rule{height:1px;background:var(--line);margin:18px 0 22px}
+    .badges{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 26px}
+    .badge{font-size:10px;text-transform:uppercase;letter-spacing:.08em;border:1px solid var(--line-strong);background:#fff;padding:5px 8px;border-radius:3px;font-weight:800;color:#475467}
+    .badge.blue{border-color:#b8d6f0;color:#0f4f82;background:var(--blue-soft)}
+    .badge.green{border-color:#b8dec9;color:#0e6b40;background:var(--green-soft)}
+    .summary{border:1px solid #20252d;background:#fff;padding:18px 20px;margin:24px 0;box-shadow:var(--shadow)}
+    .summary strong{font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+    .summary p{margin:5px 0 0}
+    .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .card{border:1px solid var(--line);background:#fff;padding:18px 18px 16px;border-radius:var(--radius)}
+    .card h3{margin:0 0 6px;font-size:15px}
+    .card p{font-size:13px;margin:0;color:var(--muted)}
+    .kicker{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#7a8797;margin-bottom:5px}
+    .flow{display:grid;gap:8px;margin:18px 0}
+    .flow-step{border:1px solid var(--line);background:var(--surface);padding:11px 14px;font-size:13px;display:flex;align-items:center;gap:10px}
+    .flow-step .n{width:24px;height:24px;border:1px solid var(--line-strong);display:grid;place-items:center;border-radius:50%;font-family:var(--mono);font-size:11px;background:#fff}
+    .flow-arrow{text-align:center;color:#8c98a8;font-family:var(--mono);font-size:12px;height:7px;line-height:7px}
+    .code{border:1px solid #2c333d;background:#11161d;color:#f3f6fa;border-radius:4px;padding:16px 18px;overflow:auto;font:12px/1.7 var(--mono);margin:16px 0}
+    .diagram-shell{border:1px solid var(--line-strong);background:#fff;margin:18px 0;overflow:auto}
+    .diagram-head{display:flex;justify-content:space-between;gap:20px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+    .diagram-head strong{font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+    .trust-pill{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:1px solid #f0b6b2;color:var(--red);background:var(--red-soft);padding:4px 7px;border-radius:3px}
+    .diagram{padding:20px;min-width:870px}
+    .diagram-row{display:grid;grid-template-columns:1.1fr 1.1fr 1.4fr 1fr;gap:10px;align-items:stretch}
+    .d-box{border:1px solid var(--line-strong);background:#fff;padding:12px;min-height:120px}
+    .d-box.local{border-color:#b9dec9;background:linear-gradient(to bottom,#fff,#f6fcf8)}
+    .d-box.server{border-color:#c6b9e8;background:linear-gradient(to bottom,#fff,#faf7ff)}
+    .d-box .d-title{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px}
+    .d-box ul{margin:0;padding-left:16px;font-size:11px;color:#536071}
+    .d-box li{margin:2px 0}
+    .d-arrow{display:flex;align-items:center;justify-content:center;color:#687585;font:11px var(--mono)}
+    .d-arrow::before{content:"→";font-size:24px}
+    .boundary{margin:10px 0 12px;padding:8px 10px;border:1px dashed #d05a50;background:#fff8f7;color:var(--red);font-size:11px;font-weight:750;text-align:center}
+    .architecture-note{margin-top:12px;font-size:12px;color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin:16px 0;font-size:12px}
+    th,td{border:1px solid var(--line);padding:10px 11px;text-align:left;vertical-align:top}
+    th{background:var(--surface-2);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+    .safe{color:var(--green);font-weight:800}.block{color:var(--red);font-weight:800}.partial{color:#856b00;font-weight:800}
+    .callout{border-left:3px solid var(--blue);background:var(--blue-soft);padding:12px 14px;margin:18px 0;font-size:13px;color:#24405b}
+    .callout.warn{border-left-color:#c77700;background:#fff8e8;color:#604000}
+    .callout.danger{border-left-color:var(--red);background:var(--red-soft);color:#6a2a24}
+    .split{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);margin:18px 0}
+    .split>div{padding:18px}.split>div+div{border-left:1px solid var(--line)}
+    .split h3{margin:0 0 8px}.split ul{margin:0;padding-left:18px;font-size:13px;color:var(--muted)}
+    .meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);margin:24px 0}
+    .meta-item{padding:12px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .meta-item:nth-child(4n){border-right:none}
+    .meta-item .label{font-size:9px;color:#7a8797;letter-spacing:.08em;text-transform:uppercase;font-weight:800}.meta-item .value{margin-top:3px;font-size:12px;font-weight:700}
+    .footer{border-top:1px solid var(--line);padding:24px 0 0;color:#6b7787;font-size:11px;margin-top:70px}
+    mark{background:#fff0a8;color:inherit;padding:0 1px}
+    .hidden{display:none!important}
+    @media (max-width: 1080px){
+      .content-wrap{padding-left:34px;padding-right:34px}
+      .grid-3{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width: 820px){
+      :root{--header:64px}
+      .topbar{padding:0 16px}.menu-toggle{display:block}.header-actions .header-btn:first-child{display:none}
+      .layout{grid-template-columns:1fr}
+      .sidebar{position:fixed;left:0;top:var(--header);bottom:0;width:min(86vw,320px);height:auto;z-index:90;transform:translateX(-105%);transition:transform .2s ease;box-shadow:12px 0 30px rgba(0,0,0,.12)}
+      .sidebar.open{transform:translateX(0)}
+      .content-wrap{padding:34px 20px 80px}
+      h1{font-size:38px}.lead{font-size:16px}
+      .grid-2,.grid-3,.split{grid-template-columns:1fr}.split>div+div{border-left:none;border-top:1px solid var(--line)}
+      .meta{grid-template-columns:1fr 1fr}.meta-item:nth-child(4n){border-right:1px solid var(--line)}.meta-item:nth-child(2n){border-right:none}
+    }
+    @media (max-width: 540px){
+      h1{font-size:33px}.header-actions .header-btn:last-child{display:none}.brand{min-width:0}.brand-text span{display:none}
+      .meta{grid-template-columns:1fr}.meta-item,.meta-item:nth-child(2n),.meta-item:nth-child(4n){border-right:none}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#overview" aria-label="LOOKUP documentation home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M12 2.7 19 5v6.1c0 4.7-2.7 8.2-7 10.2-4.3-2-7-5.5-7-10.2V5l7-2.3Z"/>
+          <path d="M8.6 11.8h6.8M10.1 8.5h3.8M10.1 15.1h3.8"/>
+        </svg>
+      </span>
+      <span class="brand-text"><strong>LOOKUP</strong><span>Privacy-Preserving Browser AI</span></span>
+    </a>
+    <div class="header-actions">
+      <a class="header-btn" href="https://github.com/sooubh/lookup" target="_blank" rel="noreferrer">↗ Repository</a>
+      <a class="header-btn" href="#references">References</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open documentation navigation">☰</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <p class="sidebar-title">Contents</p>
+      <p class="sidebar-sub">Technical proposal · SIH 2026</p>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" />
+      </div>
+      <nav id="nav">
+        <a class="nav-link" href="#overview"><span class="num">1</span><span>Overview</span></a>
+        <a class="nav-link" href="#problem"><span class="num">2</span><span>Problem Statement</span></a>
+        <a class="nav-link" href="#limitations"><span class="num">3</span><span>Why Existing Approaches Fall Short</span></a>
+        <a class="nav-link" href="#solution"><span class="num">4</span><span>Solution</span></a>
+        <a class="nav-link sub" href="#task-firewall"><span>4.1</span><span>Task-Aware Privacy Firewall</span></a>
+        <a class="nav-link sub" href="#multisource"><span>4.2</span><span>Multi-Source Local Perception</span></a>
+        <a class="nav-link sub" href="#minimum"><span>4.3</span><span>Minimum-Context Sharing</span></a>
+        <a class="nav-link sub" href="#confidence"><span>4.4</span><span>Privacy Confidence Gate</span></a>
+        <a class="nav-link" href="#user-flow"><span class="num">5</span><span>User Flow</span></a>
+        <a class="nav-link" href="#architecture"><span class="num">6</span><span>System Architecture</span></a>
+        <a class="nav-link sub" href="#browser-layer"><span>6.1</span><span>Browser / Local Layer</span></a>
+        <a class="nav-link sub" href="#privacy-layer"><span>6.2</span><span>LOOKUP Privacy Layer</span></a>
+        <a class="nav-link sub" href="#trust-boundary"><span>6.3</span><span>Trust Boundary</span></a>
+        <a class="nav-link sub" href="#server-ai"><span>6.4</span><span>Server AI</span></a>
+        <a class="nav-link" href="#tech-stack"><span class="num">7</span><span>Technology Stack</span></a>
+        <a class="nav-link" href="#privacy-model"><span class="num">8</span><span>Privacy Model</span></a>
+        <a class="nav-link" href="#agent-loop"><span class="num">9</span><span>Agent Execution Loop</span></a>
+        <a class="nav-link" href="#feasibility"><span class="num">10</span><span>Feasibility</span></a>
+        <a class="nav-link" href="#viability"><span class="num">11</span><span>Viability</span></a>
+        <a class="nav-link" href="#impact"><span class="num">12</span><span>Impact & Benefits</span></a>
+        <a class="nav-link" href="#usp"><span class="num">13</span><span>USP</span></a>
+        <a class="nav-link" href="#comparison"><span class="num">14</span><span>Comparison</span></a>
+        <a class="nav-link" href="#references"><span class="num">15</span><span>Research & References</span></a>
+        <a class="nav-link" href="#project-status"><span class="num">16</span><span>Project Status</span></a>
+        <a class="nav-link" href="#team"><span class="num">17</span><span>SIH Information</span></a>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="content-wrap">
+        <section id="overview" data-title="Overview">
+          <div class="eyebrow">System documentation · Smart India Hackathon 2026</div>
+          <h1>LOOKUP: Technical Architecture &amp; Project Specification</h1>
+          <div class="rule"></div>
+          <p class="lead">A privacy-preserving browser-agent architecture that keeps sensitive visual context on the device, sanitizes only the information needed for a task, and allows an external AI model to reason over the resulting safe context.</p>
+          <div class="badges">
+            <span class="badge blue">SIH26171</span><span class="badge green">Smart Automation</span><span class="badge">Concept / Prototype</span><span class="badge">WebExtension MV3</span>
+          </div>
+          <div class="summary">
+            <strong>Architecture summary</strong>
+            <p>LOOKUP places a local privacy enforcement layer between a browser agent and remote AI reasoning. The intended design combines adaptive capture, DOM/OCR/local-vision analysis, sensitive-data detection, redaction, a fail-closed egress gate, server-side reasoning, and local action validation.</p>
+          </div>
+          <div class="meta">
+            <div class="meta-item"><div class="label">Problem statement</div><div class="value">On-device Visual Perception for Light-weight Browser Agents</div></div>
+            <div class="meta-item"><div class="label">Theme</div><div class="value">Smart Automation</div></div>
+            <div class="meta-item"><div class="label">Category</div><div class="value">Software</div></div>
+            <div class="meta-item"><div class="label">Team</div><div class="value">Gen(AI)Tics · 164736</div></div>
+          </div>
+        </section>
+
+        <section id="problem" data-title="Problem Statement">
+          <h2>2. Problem Statement</h2>
+          <p>Browser agents need screen and webpage context to understand a task and perform actions. That same context can contain information that should not be exposed to external AI services.</p>
+          <div class="grid-2">
+            <div class="card"><div class="kicker">Cloud AI</div><h3>High reasoning capability</h3><p>Remote models can provide strong reasoning, but browser context must be transmitted to them.</p></div>
+            <div class="card"><div class="kicker">Fully local AI</div><h3>Limited client resources</h3><p>Keeping everything local reduces external exposure, but device memory, compute and battery are constraints.</p></div>
+          </div>
+          <div class="callout">The project focuses on the missing middle ground: keep privacy-sensitive perception and enforcement on the client, while using server-side AI where heavier reasoning is useful.</div>
+        </section>
+
+        <section id="limitations" data-title="Existing Approaches">
+          <h2>3. Why Existing Approaches Fall Short</h2>
+          <p>A browser privacy layer cannot rely only on simple text filtering. Sensitive information may appear as normal DOM text, image text, rendered graphics, or visual regions that are not obvious from the page structure alone.</p>
+          <div class="grid-3">
+            <div class="card"><div class="kicker">01 · DOM-only</div><h3>Misses visual-only data</h3><p>Information rendered inside images or visual UI regions may not exist as useful DOM text.</p></div>
+            <div class="card"><div class="kicker">02 · OCR-only</div><h3>Misses structure</h3><p>OCR can recover text, but page semantics and relationships between elements are still important.</p></div>
+            <div class="card"><div class="kicker">03 · Full-page sharing</div><h3>Over-disclosure</h3><p>Sending the whole screen gives the AI more information than the current task actually requires.</p></div>
+          </div>
+        </section>
+
+        <section id="solution" data-title="Solution">
+          <h2>4. LOOKUP Solution</h2>
+          <p>LOOKUP is proposed as a privacy middleware layer for browser agents. It determines what the task needs, perceives the page locally, removes or masks sensitive information, and controls what can cross the privacy boundary.</p>
+          <div class="flow">
+            <div class="flow-step"><span class="n">1</span><strong>User task</strong><span>→ natural-language browser objective</span></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step"><span class="n">2</span><strong>Local context capture</strong><span>→ DOM, screenshot or adaptive combination</span></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step"><span class="n">3</span><strong>Local privacy processing</strong><span>→ detect, redact and validate sensitive content</span></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step"><span class="n">4</span><strong>Sanitized context</strong><span>→ only task-relevant safe information</span></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step"><span class="n">5</span><strong>AI reasoning</strong><span>→ return structured action</span></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-step"><span class="n">6</span><strong>Local validation &amp; execution</strong><span>→ perform action inside browser</span></div>
+          </div>
+
+          <div id="task-firewall" class="card"><h3>4.1 Task-Aware Privacy Firewall</h3><p>Instead of masking the entire page, the privacy layer uses the current task to reason about which parts of the browser state are actually required. The goal is minimum necessary disclosure without removing useful context.</p></div>
+          <div id="multisource" class="card"><h3>4.2 Multi-Source Local Perception</h3><p>LOOKUP combines DOM structure, OCR and on-device visual analysis so that both structured and visual information can be inspected before egress.</p></div>
+          <div id="minimum" class="card"><h3>4.3 Minimum-Context Sharing</h3><p>Only sanitized regions, relevant UI elements and task-related information should cross the trust boundary. The raw browser state is not the intended input to remote AI.</p></div>
+          <div id="confidence" class="card"><h3>4.4 Privacy Confidence Gate</h3><p>When detection or policy evaluation is uncertain, the architecture uses fail-closed behavior: block transmission or require explicit user handling rather than silently sending ambiguous context.</p></div>
+        </section>
+
+        <section id="user-flow" data-title="User Flow">
+          <h2>5. User Flow</h2>
+          <div class="grid-2">
+            <div class="card"><div class="kicker">Step 1</div><h3>Open &amp; Ask</h3><p>Install the LOOKUP extension and provide a task such as “Compare prices on this page.”</p></div>
+            <div class="card"><div class="kicker">Step 2</div><h3>Smart Capture</h3><p>Capture only the context needed for the task using DOM capture, screenshot capture, or adaptive capture.</p></div>
+            <div class="card"><div class="kicker">Step 3</div><h3>Local Privacy Guard</h3><p>Run OCR, sensitive-data detection, privacy policy checks and redaction locally before any external AI request.</p></div>
+            <div class="card"><div class="kicker">Step 4</div><h3>Server-Side AI</h3><p>Reason over sanitized context and generate the next browser action.</p></div>
+            <div class="card"><div class="kicker">Step 5</div><h3>Action Decision</h3><p>Return structured actions such as click, scroll, type or navigate.</p></div>
+            <div class="card"><div class="kicker">Step 6</div><h3>Execute in Browser</h3><p>Validate the action locally, execute it inside the browser, then continue from the updated page state.</p></div>
+          </div>
+          <div class="code">User Task
+  ↓
+Browser Agent
+  ↓
+Context Capture
+  ↓
+Local Privacy Guard
+  ↓
+Sanitized Context
+  ↓
+Server AI Reasoning
+  ↓
+Structured Action
+  ↓
+Local Validation
+  ↓
+Browser Execution
+  ↓
+Updated Page / Next Step</div>
+        </section>
+
+        <section id="architecture" data-title="System Architecture">
+          <h2>6. System Architecture</h2>
+          <p>The architecture separates local privacy enforcement from server-side reasoning. The browser remains the trust anchor for raw visual context, sensitive-data detection, and action validation.</p>
+          <div class="diagram-shell">
+            <div class="diagram-head"><strong>LOOKUP privacy-preserving browser AI architecture</strong><span class="trust-pill">Trust boundary</span></div>
+            <div class="diagram">
+              <div class="diagram-row">
+                <div class="d-box local"><div class="d-title">1 · User + Browser Agent</div><ul><li>User task</li><li>Planner</li><li>Navigator</li><li>Action engine</li></ul></div>
+                <div class="d-arrow"></div>
+                <div class="d-box local"><div class="d-title">2 · Context Capture</div><ul><li>DOM structure</li><li>Screenshot / visual region</li><li>Adaptive capture strategy</li></ul></div>
+                <div class="d-arrow"></div>
+                <div class="d-box local"><div class="d-title">3 · LOOKUP Privacy Layer</div><ul><li>Task context analyzer</li><li>Local vision model</li><li>OCR</li><li>PII / sensitive detection</li><li>Policy engine</li><li>Redaction / masking</li><li>Egress gate</li></ul></div>
+              </div>
+              <div class="boundary">RAW SCREENSHOTS · PII · CREDENTIALS · SECRETS → STAY LOCAL</div>
+              <div class="diagram-row" style="grid-template-columns:1.4fr 1fr 1.1fr 1.1fr">
+                <div class="d-box local"><div class="d-title">4 · Sanitized Context</div><ul><li>Relevant UI</li><li>Required visual regions</li><li>Task-related information</li></ul></div>
+                <div class="d-arrow"></div>
+                <div class="d-box server"><div class="d-title">5 · Server VLM / LLM</div><ul><li>Task reasoning</li><li>Visual reasoning</li><li>Structured action output</li></ul></div>
+                <div class="d-arrow"></div>
+                <div class="d-box local"><div class="d-title">6 · Local Validation</div><ul><li>Check page state</li><li>Verify permissions</li><li>Protect redacted regions</li><li>Validate action safety</li></ul></div>
+              </div>
+              <div class="architecture-note">Main principle: the external model reasons over sanitized context; the browser validates and executes the returned action locally.</div>
+            </div>
+          </div>
+
+          <div id="browser-layer">
+            <h3>6.1 Browser / Local Layer</h3>
+            <p>The browser side contains the agentic workflow and the enforcement mechanisms that operate before and after remote reasoning.</p>
+          </div>
+          <div id="privacy-layer">
+            <h3>6.2 LOOKUP Local Privacy Layer</h3>
+            <div class="grid-3">
+              <div class="card"><h3>Task Context Analyzer</h3><p>Determines what information is necessary for the current task.</p></div>
+              <div class="card"><h3>Local Perception</h3><p>Combines local vision, OCR and DOM information.</p></div>
+              <div class="card"><h3>Sensitive Detection</h3><p>Finds PII, credentials, secrets and sensitive visual regions.</p></div>
+              <div class="card"><h3>Privacy Policy Engine</h3><p>Applies policy and risk checks before egress.</p></div>
+              <div class="card"><h3>Redaction / Masking</h3><p>Removes, masks or tokenizes protected information.</p></div>
+              <div class="card"><h3>Privacy Egress Gate</h3><p>Controls whether the sanitized payload can leave the browser.</p></div>
+            </div>
+          </div>
+          <div id="trust-boundary" class="callout danger"><strong>6.3 Trust Boundary:</strong> The architectural guarantee is that raw screenshots, PII, credentials and secrets are processed locally and are not intended to cross the boundary toward external AI.</div>
+          <div id="server-ai">
+            <h3>6.4 Server AI</h3>
+            <p>The server-side VLM/LLM receives the sanitized context, reasons about the task and produces a structured action that is returned to the browser for local validation.</p>
+          </div>
+        </section>
+
+        <section id="tech-stack" data-title="Technology Stack">
+          <h2>7. Technology Stack</h2>
+          <table>
+            <thead><tr><th>Technology</th><th>Role in the proposal</th></tr></thead>
+            <tbody>
+              <tr><td>WebExtension MV3</td><td>Browser extension foundation for Chrome-oriented deployment and extension lifecycle.</td></tr>
+              <tr><td>TypeScript</td><td>Core development language for extension logic.</td></tr>
+              <tr><td>React</td><td>Extension UI / side-panel interface.</td></tr>
+              <tr><td>Tesseract.js</td><td>Client-side OCR for extracting text from visual regions.</td></tr>
+              <tr><td>WebGPU + ONNX</td><td>Browser-side lightweight visual inference path.</td></tr>
+              <tr><td>Canvas API</td><td>Redaction / masking of visual content.</td></tr>
+              <tr><td>Node.js</td><td>Backend API / server integration layer.</td></tr>
+              <tr><td>Cloud VLM / LLM</td><td>Remote task and visual reasoning over sanitized context.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="privacy-model" data-title="Privacy Model">
+          <h2>8. Privacy Model</h2>
+          <p>The design is based on minimum disclosure: do not transmit information merely because it is available. First determine what the task needs, then share the minimum safe context required to perform that task.</p>
+          <div class="split">
+            <div><h3 class="block">Stays on device</h3><ul><li>Raw screenshots</li><li>PII / personal data</li><li>Credentials and secrets</li><li>Sensitive visual regions</li></ul></div>
+            <div><h3 class="safe">Sent to AI</h3><ul><li>Sanitized context</li><li>Relevant UI elements</li><li>Required visual regions</li><li>Task-related information</li></ul></div>
+          </div>
+          <div class="callout warn"><strong>Fail-closed behavior:</strong> when privacy safety cannot be confidently established, the proposed architecture blocks the transmission path or requires explicit user handling rather than silently forwarding ambiguous context.</div>
+        </section>
+
+        <section id="agent-loop" data-title="Agent Execution Loop">
+          <h2>9. Agent Execution Loop</h2>
+          <p>LOOKUP is designed around an iterative loop rather than a one-shot request. After each action, the browser state changes and the next step can be analyzed under the same privacy controls.</p>
+          <div class="code">TASK
+ ↓
+PLAN → NAVIGATE
+ ↓
+CAPTURE RELEVANT CONTEXT
+ ↓
+LOCAL PRIVACY ANALYSIS
+ ↓
+SANITIZE + EGRESS CHECK
+ ↓
+SERVER REASONING
+ ↓
+STRUCTURED ACTION
+ ↓
+LOCAL ACTION VALIDATION
+ ↓
+EXECUTE IN BROWSER
+ ↓
+UPDATED PAGE STATE
+ ↺ NEXT AGENT STEP</div>
+        </section>
+
+        <section id="feasibility" data-title="Feasibility">
+          <h2>10. Feasibility</h2>
+          <table>
+            <thead><tr><th>Challenge / risk</th><th>Mitigation strategy</th></tr></thead>
+            <tbody>
+              <tr><td>Device limitations — larger vision models can increase memory, latency and battery use.</td><td>Use lightweight / quantized models, process relevant regions and retain a WASM fallback.</td></tr>
+              <tr><td>Browser differences — WebGPU behavior and browser APIs can vary.</td><td>Use feature detection and browser-specific fallbacks.</td></tr>
+              <tr><td>Privacy accuracy — false negatives can expose data; false positives can reduce usability.</td><td>Combine DOM, OCR and vision signals and fail closed when detection is uncertain.</td></tr>
+              <tr><td>Extension constraints — MV3 service workers have DOM-access limitations.</td><td>Use content scripts / offscreen processing and keep privacy logic independent from the AI layer.</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="viability" data-title="Viability">
+          <h2>11. Viability</h2>
+          <div class="grid-3">
+            <div class="card"><div class="kicker">Deployment</div><h3>Browser extension model</h3><p>The privacy layer can be packaged with the browser-agent workflow rather than requiring a new browser runtime.</p></div>
+            <div class="card"><div class="kicker">Model independence</div><h3>Replaceable AI backend</h3><p>The privacy enforcement layer is conceptually separated from whichever VLM/LLM performs remote reasoning.</p></div>
+            <div class="card"><div class="kicker">Scalability</div><h3>Task-oriented pipeline</h3><p>The architecture can be applied across different browser-agent workflows where sensitive context needs controlled disclosure.</p></div>
+          </div>
+        </section>
+
+        <section id="impact" data-title="Impact">
+          <h2>12. Impact &amp; Benefits</h2>
+          <div class="grid-2">
+            <div class="card"><h3>Privacy &amp; security</h3><p>Sensitive visual data is processed locally before external AI access.</p></div>
+            <div class="card"><h3>Useful AI on resource-limited devices</h3><p>Lightweight local processing protects sensitive content while server AI can perform heavier reasoning.</p></div>
+            <div class="card"><h3>Broader AI adoption</h3><p>The model supports privacy-aware browser automation for pages containing sensitive information.</p></div>
+            <div class="card"><h3>Reduced unnecessary sharing</h3><p>Only the task-relevant sanitized context is intended to be transmitted.</p></div>
+          </div>
+          <div class="callout">Potential efficiency improvements are workload-dependent. Local filtering may reduce unnecessary visual data sent to the server, but actual savings depend on model size, task complexity and network usage.</div>
+        </section>
+
+        <section id="usp" data-title="USP">
+          <h2>13. Unique Value Proposition</h2>
+          <div class="grid-3">
+            <div class="card"><div class="kicker">01</div><h3>Minimum-Disclosure Context</h3><p>Dynamically pass only the safest task-relevant browser context.</p></div>
+            <div class="card"><div class="kicker">02</div><h3>Multimodal Privacy Guard</h3><p>Combine DOM, OCR and local vision to protect both structural and visual information.</p></div>
+            <div class="card"><div class="kicker">03</div><h3>Drop-In Agent Privacy</h3><p>Add privacy enforcement around browser-agent workflows without replacing the entire agent architecture.</p></div>
+          </div>
+        </section>
+
+        <section id="comparison" data-title="Comparison">
+          <h2>14. Comparison With Existing Solutions</h2>
+          <p>The following comparison reflects the project proposal's framing. “Partial” indicates that the source material describes limited or incomplete coverage rather than a binary absence.</p>
+          <table>
+            <thead><tr><th>Capability</th><th>NanoBrowser</th><th>SafeScreen</th><th>Agent Browser</th><th>LOOKUP</th></tr></thead>
+            <tbody>
+              <tr><td>AI browser automation</td><td class="safe">✓</td><td class="safe">✓</td><td class="safe">✓</td><td class="safe">✓</td></tr>
+              <tr><td>Local privacy protection</td><td>—</td><td class="safe">✓</td><td>—</td><td class="safe">✓</td></tr>
+              <tr><td>Visual + OCR + DOM</td><td class="partial">Partial</td><td class="partial">Partial</td><td class="safe">✓</td><td class="safe">✓</td></tr>
+              <tr><td>Task-aware context</td><td class="partial">Partial</td><td class="partial">Privacy-focused</td><td class="safe">✓</td><td class="safe">✓</td></tr>
+              <tr><td>Fail-closed privacy</td><td>—</td><td class="safe">✓</td><td class="partial">Partial</td><td class="safe">✓</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="references" data-title="Research & References">
+          <h2>15. Research &amp; References</h2>
+          <div class="grid-2">
+            <a class="card" href="https://onnxruntime.ai/docs/tutorials/web/ep-webgpu.html" target="_blank" rel="noreferrer"><div class="kicker">Browser inference</div><h3>ONNX Runtime Web — WebGPU</h3><p>Reference for running ONNX inference in the browser with WebGPU.</p></a>
+            <a class="card" href="https://huggingface.co/docs/transformers.js/guides/webgpu" target="_blank" rel="noreferrer"><div class="kicker">Browser AI</div><h3>Transformers.js — WebGPU guide</h3><p>Reference for browser-side inference and WebGPU-capable transformer workloads.</p></a>
+            <a class="card" href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions" target="_blank" rel="noreferrer"><div class="kicker">Extension platform</div><h3>MDN WebExtensions</h3><p>Reference for extension architecture, content scripts and cross-browser concepts.</p></a>
+            <a class="card" href="https://developer.chrome.com/docs/extensions/reference/api/offscreen" target="_blank" rel="noreferrer"><div class="kicker">MV3 processing</div><h3>Chrome Offscreen API</h3><p>Reference for offscreen documents in Manifest V3 extension architectures.</p></a>
+          </div>
+        </section>
+
+        <section id="project-status" data-title="Project Status">
+          <h2>16. Project Status &amp; Scope</h2>
+          <div class="callout warn"><strong>Important:</strong> this website documents the <em>project idea, proposed architecture, intended workflow and technical direction</em>. It should not be interpreted as proof that every end-to-end component is currently production-ready or fully operational.</div>
+          <p>The GitHub repository already contains the LOOKUP browser-agent codebase and extension-oriented project structure. The documentation here intentionally separates the proposed system architecture from the current implementation maturity.</p>
+          <p>That distinction is important for technical reviewers: the site explains <strong>what LOOKUP is designed to achieve and how it is intended to work</strong>, without inventing benchmarks, accuracy numbers, deployment claims or completion status.</p>
+        </section>
+
+        <section id="team" data-title="SIH Information">
+          <h2>17. Smart India Hackathon Information</h2>
+          <div class="meta">
+            <div class="meta-item"><div class="label">Event</div><div class="value">Smart India Hackathon 2026</div></div>
+            <div class="meta-item"><div class="label">Problem statement ID</div><div class="value">SIH26171</div></div>
+            <div class="meta-item"><div class="label">Problem statement</div><div class="value">On-device Visual Perception for Light-weight Browser Agents</div></div>
+            <div class="meta-item"><div class="label">Theme</div><div class="value">Smart Automation</div></div>
+            <div class="meta-item"><div class="label">Category</div><div class="value">Software</div></div>
+            <div class="meta-item"><div class="label">Team ID</div><div class="value">164736</div></div>
+            <div class="meta-item"><div class="label">Team</div><div class="value">Gen(AI)Tics</div></div>
+            <div class="meta-item"><div class="label">Repository</div><div class="value"><a href="https://github.com/sooubh/lookup" target="_blank" rel="noreferrer">github.com/sooubh/lookup</a></div></div>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <strong>LOOKUP</strong> · Privacy-Preserving Browser AI · Technical project proposal / architecture specification · Source content aligned to the SIH 2026 project proposal and the public LOOKUP repository.
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const menuToggle = document.getElementById('menuToggle');
+    const searchInput = document.getElementById('searchInput');
+    const navLinks = [...document.querySelectorAll('.nav-link')];
+    const sections = [...document.querySelectorAll('main section[id]')];
+
+    menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+    navLinks.forEach(link => link.addEventListener('click', () => sidebar.classList.remove('open')));
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter(e => e.isIntersecting).sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + visible.target.id));
+    }, { rootMargin: '-14% 0px -72% 0px', threshold: [0, .25, .5, .75] });
+    sections.forEach(section => observer.observe(section));
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim().toLowerCase();
+      navLinks.forEach(link => {
+        const text = link.textContent.toLowerCase();
+        link.classList.toggle('hidden', q && !text.includes(q));
+      });
+      if (!q) sections.forEach(s => s.hidden = false);
+      else sections.forEach(s => {
+        const has = s.innerText.toLowerCase().includes(q) || s.id.toLowerCase().includes(q);
+        s.hidden = !has;
+      });
+    });
+
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault(); searchInput.focus();
+      }
+    });
+  </script>
+</body>
+</html>
